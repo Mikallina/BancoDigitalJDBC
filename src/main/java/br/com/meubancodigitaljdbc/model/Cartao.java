@@ -22,7 +22,6 @@ public abstract class Cartao {
     public Cartao() {
 
     }
-
     public Cartao(String numCartao, Conta conta, TipoCartao tipoCartao, int senha, boolean status) {
         super();
         this.numCartao = numCartao;

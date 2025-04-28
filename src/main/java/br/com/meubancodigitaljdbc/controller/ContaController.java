@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.controller;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import br.com.meubancodigitaljdbc.dto.ContaResponseDTO;
@@ -37,7 +38,7 @@ public class ContaController {
 
 	@PostMapping("/criarConta")
 	public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
-											@RequestParam TipoConta tipoConta) {
+											@RequestParam TipoConta tipoConta) throws SQLException {
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			Conta conta = contaService.criarConta(cliente, agencia, tipoConta);
@@ -48,7 +49,7 @@ public class ContaController {
 	}
 
 	@GetMapping("/buscarConta/{cpf}")
-	public ResponseEntity<List<Conta>> buscarContasPorCpf(@PathVariable String cpf) {
+	public ResponseEntity<List<Conta>> buscarContasPorCpf(@PathVariable String cpf) throws SQLException {
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			List<Conta> contas = contaService.buscarContasPorCliente(cliente);
@@ -62,7 +63,7 @@ public class ContaController {
 	}
 
 	@PostMapping("/depositar")
-	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) {
+	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws SQLException {
 		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumConta(), depositoDTO.getValor());
 
 		if (sucesso) {
@@ -82,13 +83,13 @@ public class ContaController {
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao realizar PIX.");
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException | SQLException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
 
 	@PostMapping("/transferirPoupanca")
-	public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO) {
+	public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
 		boolean sucesso = contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
 				transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getNumContaDestino());
 		if (sucesso) {
@@ -99,7 +100,7 @@ public class ContaController {
 	}
 
 	@PostMapping("/transferirOutrasContas")
-	public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO) {
+	public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
 		boolean sucesso = contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
 				transferenciaDTO.getNumContaDestino(), transferenciaDTO.getNumContaOrigem());
 		if (sucesso) {
@@ -119,7 +120,7 @@ public class ContaController {
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException | SQLException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 
@@ -134,7 +135,7 @@ public class ContaController {
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException | SQLException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
@@ -150,7 +151,7 @@ public class ContaController {
 
 			return ResponseEntity.ok(contaResponseDTO);
 
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException | SQLException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
 		}
 	}

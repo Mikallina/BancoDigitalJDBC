@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.controller;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public class CartaoController {
 
 	@PostMapping("/emitir-cartao")
 	public ResponseEntity<Cartao> emitirCartao(@RequestParam String contaC, @RequestParam TipoCartao tipoCartao,
-											   @RequestParam(required = false) String diaVencimento) {
+											   @RequestParam(required = false) String diaVencimento) throws SQLException {
 		Conta conta = contaService.buscarContas(contaC);
 
 		if (conta != null) {
@@ -75,7 +76,7 @@ public class CartaoController {
 	}
 
 	@GetMapping("/obter-dados/{idCartao}")
-	public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao) {
+	public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao) throws SQLException {
 		Cartao cartao = (Cartao) cartaoService.buscarCartaoPorCliente(numCartao);
 		if (cartao == null) {
 			return ResponseEntity.notFound().build();
@@ -85,7 +86,7 @@ public class CartaoController {
 
 	@PutMapping("/alterar-status/{numCartao}")
 	public ResponseEntity<String> alterarStatusCartao(@PathVariable String numCartao,
-			@RequestBody AlterarStatusDTO dto) {
+			@RequestBody AlterarStatusDTO dto) throws SQLException {
 		boolean alterado = cartaoService.alterarStatus(numCartao, dto.isStatus());
 
 		if (alterado) {
@@ -108,7 +109,7 @@ public class CartaoController {
 	}
 
 	@GetMapping("/{numeroConta}")
-	public ResponseEntity<List<Cartao>> verificarCartao(@PathVariable String numeroConta) {
+	public ResponseEntity<List<Cartao>> verificarCartao(@PathVariable String numeroConta) throws SQLException {
 		Conta conta = contaService.buscarContas(numeroConta);
 
 		if (conta == null) {
@@ -144,7 +145,7 @@ public class CartaoController {
 	}
 
 	@GetMapping("/fatura/{numCartao}")
-	public ResponseEntity<?> consultarFatura(@PathVariable String numCartao) {
+	public ResponseEntity<?> consultarFatura(@PathVariable String numCartao) throws SQLException {
 		double fatura = cartaoService.consultarFatura(numCartao);
 		return ResponseEntity.ok(Map.of("fatura", fatura));
 	}
