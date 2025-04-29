@@ -1,42 +1,49 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.config.ConexaoJDBC;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
 @Repository
 public class ContaDAO {
 
-    private DataSource dataSource;
+    private final DataSource dataSource;
+
+    public ContaDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public Conta salvarConta(Conta conta) throws SQLException {
-        String sql = "INSERT INTO conta (tipo_conta, id_conta, agencia, num_conta, cliente_id) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO conta (tipo_conta, agencia, num_conta, saldo, cliente_id) VALUES (?, ?, ?, ?, ?)";
 
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, conta.getTipoConta().name());
-            stmt.setLong(2, conta.getIdConta());
-            stmt.setDouble(3, conta.getAgencia());
-            stmt.setString(4, conta.getNumConta());
+            stmt.setDouble(2, conta.getAgencia());
+            stmt.setString(3, conta.getNumConta());
+            stmt.setDouble(4, conta.getSaldo());
             stmt.setLong(5, conta.getCliente().getIdCliente());
 
             stmt.executeUpdate();
 
-            // Obtendo a chave gerada para o id da conta
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                conta.setIdConta(rs.getLong(1));
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    conta.setIdConta(generatedKeys.getLong(1));
+                }
             }
         }
+
         return conta;
     }
 
