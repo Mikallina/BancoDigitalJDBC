@@ -2,6 +2,8 @@ package br.com.meubancodigitaljdbc.model;
 
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 
+import java.util.Optional;
+
 public class ContaPoupanca extends Conta {
     private double taxaRendimento;
     public ContaPoupanca() {

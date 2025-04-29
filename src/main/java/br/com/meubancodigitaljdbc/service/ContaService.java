@@ -196,7 +196,7 @@ public class ContaService {
     }
 
     public double obterSaldo(String cpf) {
-        // TODO Auto-generated method stub
+
         return 0;
     }
 
@@ -263,7 +263,6 @@ public class ContaService {
     }
 
     public Conta buscarContaPorClienteEConta(String cpf, String numConta) throws SQLException {
-        // Busca o cliente com o CPF fornecido
         Cliente cliente = clienteDAO.findByCpf(cpf);
 
         if (cliente == null) {

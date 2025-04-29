@@ -46,6 +46,24 @@ public class ClienteDAO {
         }
     }
 
+    public Cliente buscarPorId(Long idCliente) throws SQLException {
+        String sql = "SELECT * FROM cliente WHERE id_cliente = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, idCliente);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Cliente cliente = new Cliente();
+                cliente.setNome(rs.getString("nome"));
+                cliente.setCpf(rs.getString("cpf"));
+                return cliente;
+            }
+        }
+        return null;
+    }
+
     public Cliente findByCpf(String cpf) {
         String sql = "SELECT * FROM cliente WHERE cpf = ?";
 

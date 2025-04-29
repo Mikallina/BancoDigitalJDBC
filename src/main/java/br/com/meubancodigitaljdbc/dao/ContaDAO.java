@@ -12,10 +12,14 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ContaDAO {
 
+
+    @Autowired
+    private ClienteDAO clienteDAO;
     private final DataSource dataSource;
 
     public ContaDAO(DataSource dataSource) {
@@ -68,15 +72,14 @@ public class ContaDAO {
     public List<Conta> buscarPorClienteId(Long clienteId) throws SQLException {
         List<Conta> contas = new ArrayList<>();
         String sql = "SELECT * FROM conta WHERE cliente_id = ?";
-
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setLong(1, clienteId);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 contas.add(mapearConta(rs));
+                System.out.println(contas);
             }
         }
         return contas;
@@ -84,7 +87,7 @@ public class ContaDAO {
 
     // Método para atualizar o saldo da conta
     public void atualizarSaldo(Long idConta, double novoSaldo) throws SQLException {
-        String sql = "UPDATE conta SET saldo = ? WHERE id = ?";
+        String sql = "UPDATE conta SET saldo = ? WHERE id_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -98,9 +101,10 @@ public class ContaDAO {
     // Método auxiliar para mapear o ResultSet para a entidade Conta
     private Conta mapearConta(ResultSet rs) throws SQLException {
         TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
-        Cliente cliente = new Cliente(); // Você deve obter esse cliente por meio do ClienteDAO usando o cliente_id
-        cliente.setIdCliente(rs.getLong("cliente_id"));
+        long clienteId = rs.getLong("cliente_id");
 
+        Cliente cliente = clienteDAO.buscarPorId(clienteId);
+        System.out.println("Id Cliente: " + clienteId);
         Conta conta;
         if (tipo == TipoConta.CORRENTE) {
             conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
@@ -108,13 +112,17 @@ public class ContaDAO {
             conta = new ContaPoupanca(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
         }
 
-        conta.setIdConta(rs.getLong("id"));
+        conta.setIdConta(rs.getLong("id_conta"));
         conta.setSaldo(rs.getDouble("saldo"));
         return conta;
     }
 
+
+
+
     // Método para buscar todas as contas
     public List<Conta> findAll() {
+
         List<Conta> contas = new ArrayList<>();
         String sql = "SELECT * FROM conta";
 
@@ -135,10 +143,10 @@ public class ContaDAO {
                         break;
                     default:
                         System.out.println("Tipo de conta desconhecido: " + tipoConta);
-                        continue; // ignora este registro
+                        continue;
                 }
 
-                conta.setIdConta(rs.getLong("id"));
+                conta.setIdConta(rs.getLong("id_conta"));
                 conta.setNumConta(rs.getString("num_conta"));
                 conta.setSaldo(rs.getDouble("saldo"));
 

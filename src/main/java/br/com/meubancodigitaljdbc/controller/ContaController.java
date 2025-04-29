@@ -49,17 +49,14 @@ public class ContaController {
 	}
 
 	@GetMapping("/buscarConta/{cpf}")
-	public ResponseEntity<List<Conta>> buscarContasPorCpf(@PathVariable String cpf) throws SQLException {
+	public ResponseEntity<Cliente> buscarClienteComContas(@PathVariable String cpf) throws SQLException {
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			List<Conta> contas = contaService.buscarContasPorCliente(cliente);
-			if (!contas.isEmpty()) {
-				return ResponseEntity.ok(contas);
-			} else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-			}
+			cliente.setContas(contas); // POPULA as contas
+			return ResponseEntity.ok(cliente); // Retorna o cliente com as contas
 		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@PostMapping("/depositar")

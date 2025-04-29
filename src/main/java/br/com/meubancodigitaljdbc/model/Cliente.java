@@ -20,6 +20,8 @@ public class Cliente {
 
     }
 
+
+
     public Cliente(String nome, String cpf, LocalDate dataNascimento, Endereco endereco, Categoria categoria) {
         this.nome = nome;
         this.cpf = cpf;

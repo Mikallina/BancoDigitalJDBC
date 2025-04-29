@@ -117,7 +117,7 @@
 	<script>
 	function pesquisarContas() {
 		  const cpf = document.getElementById('cpf').value;
-		  fetch(`http://localhost:8080/cliente/buscarCpf/${cpf}`)
+		  fetch(`http://localhost:8080/conta/buscarConta/${cpf}`)
 		    .then(response => response.json())
 		    .then(data => {
 		      if (data && data.contas && data.contas.length > 0) {

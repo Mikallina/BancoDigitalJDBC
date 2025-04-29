@@ -2,6 +2,8 @@ package br.com.meubancodigitaljdbc.model;
 
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 
+import java.util.Optional;
+
 public class ContaCorrente extends Conta {
 
     private double taxaManutencao;
@@ -21,6 +23,9 @@ public class ContaCorrente extends Conta {
 
     public ContaCorrente(Cliente cliente, int agencia, String numConta) {
         super(cliente, agencia, numConta);
+    }
+
+    public ContaCorrente(Optional<Cliente> cliente, int agencia, String numConta, TipoConta tipo) {
     }
 
     public double getTaxaManutencao() {
