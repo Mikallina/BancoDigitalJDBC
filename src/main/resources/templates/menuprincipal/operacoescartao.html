@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Operações Bancárias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 30px;
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="mb-4 text-center text-primary">Painel de Operações</h2>
+    
+    <form onsubmit="event.preventDefault(); executarOperacao();">
+
+        <!-- Busca de cliente -->
+        <div class="card p-4">
+            <h5 class="section-title">Buscar Cliente</h5>
+            <div class="form-row align-items-end">
+                <div class="form-group col-md-8">
+                    <label for="cpf">CPF</label>
+                    <input type="text" class="form-control" id="cpf" placeholder="Digite o CPF">
+                </div>
+                <div class="form-group col-md-4">
+                    <button type="button" class="btn btn-secondary btn-block" onclick="pesquisarContas()">Buscar Contas</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados do cliente -->
+        <div id="clienteInfo" style="display: none;" class="card p-4">
+            <h5 class="section-title">Informações do Cliente</h5>
+            <p><strong>Nome:</strong> <span id="clienteNome"></span></p>
+            <p><strong>CPF:</strong> <span id="clienteCpf"></span></p>
+            <div class="form-group">
+                <label>Contas Existentes</label>
+                <select id="listaContas" class="form-control" onchange="verificarCartao()">
+                    <option value="" disabled selected>Selecione uma conta</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Cartões vinculados -->
+        <div id="cartaoInfo" style="display: none;" class="card p-4">
+            <h5 class="section-title">Cartões Vinculados</h5>
+            <div class="form-group">
+                <label for="listaCartoes">Selecione o Cartão</label>
+                <select id="listaCartoes" class="form-control" onchange="atualizarOperacoes()">
+                    <option value="" disabled selected>Selecione um cartão</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Operações -->
+        <div id="operacoes" style="display: none;" class="card p-4">
+            <h5 class="section-title">Operações Disponíveis</h5>
+            <div class="form-group">
+                <label for="operacao">Selecione a Operação</label>
+                <select class="form-control" id="operacao" onchange="exibirCamposOperacao()">
+                    <option value="" disabled selected>Selecione uma Operação</option>
+                    <option value="7">Realizar Compra no Cartão de Crédito</option>
+                    <option value="8">Consultar Fatura do Cartão de Crédito</option>
+                    <option value="9">Alterar Limite do Cartão de Crédito</option>
+                    <option value="10">Alterar Senha Débito/Crédito</option>
+                    <option value="11">Alterar Status Débito/Crédito</option>
+                    <option value="12">Obter Dados do Cartão Débito/Crédito</option>
+                </select>
+            </div>
+
+            <div id="valorOperacaoDiv" class="form-group" style="display: none;">
+                <label for="valorOperacao">Valor da Operação</label>
+                <input type="number" class="form-control" id="valorOperacao" placeholder="Digite o valor">
+            </div>
+
+            <div class="form-group">
+                <label for="numCartao">Número do Cartão</label>
+                <input type="text" class="form-control" id="numCartao" placeholder="Digite o número do cartão">
+            </div>
+
+            <!-- Campos específicos -->
+            <div id="compraCartaoDiv" style="display: none;" class="form-group">
+                <label for="dataCompra">Data da Compra</label>
+                <input type="date" class="form-control" id="dataCompra">
+            </div>
+
+            <div id="limiteCartaoDiv" style="display: none;" class="form-group">
+                <label for="novoLimite">Novo Limite</label>
+                <input type="number" class="form-control" id="novoLimite">
+            </div>
+
+            <div id="senhaCartaoDiv" style="display: none;">
+                <div class="form-group">
+                    <label for="senhaAntiga">Senha Antiga</label>
+                    <input type="password" class="form-control" id="senhaAntiga">
+                </div>
+                <div class="form-group">
+                    <label for="senhaNova">Nova Senha</label>
+                    <input type="password" class="form-control" id="senhaNova">
+                </div>
+            </div>
+
+            <div id="statusCartaoDiv" style="display: none;" class="form-group">
+                <label for="statusCartao">Status do Cartão</label>
+                <select class="form-control" id="statusCartao">
+                    <option value="true">Ativado</option>
+                    <option value="false">Desativado</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-3">Executar Operação</button>
+        </div>
+
+        <!-- Fatura e botões -->
+        <div class="text-center mt-4">
+            <div id="faturaResultado" class="alert alert-info" style="display: none;">
+                <strong>Fatura Atual:</strong> R$ <span id="valorFatura"></span>
+            </div>
+
+            <button type="button" class="btn btn-secondary mr-2" onclick="window.history.back()">Voltar</button>
+            <button type="button" class="btn btn-success" id="btnPagarFatura" style="display: none;" onclick="pagarFaturaCartao()">Pagar Fatura</button>
+        </div>
+
+    </form>
+
+    <!-- Criar cartões -->
+    <div id="novoCartao" class="text-center mt-4">
+        <button type="button" class="btn btn-success mr-2" onclick="criarCartao('DEBITO')">Criar Cartão de Débito</button>
+        <button type="button" class="btn btn-warning" onclick="criarCartao('CREDITO')">Criar Cartão de Crédito</button>
+    </div>
+</div>
+
+
+	<script>
+        function pesquisarContas() {
+            const cpf = document.getElementById('cpf').value;
+            fetch(`http://localhost:8080/cliente/buscarCpf/${cpf}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.contas && data.contas.length > 0) {
+                        document.getElementById('clienteNome').textContent = data.nome;
+                        document.getElementById('clienteCpf').textContent = data.cpf;
+                        document.getElementById('clienteInfo').style.display = 'block';
+
+                        const listaContas = document.getElementById('listaContas');
+                        listaContas.innerHTML = '';
+                        const optionDefault = (text) => {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.selected = true;
+                            option.textContent = text;
+                            return option;
+                        };
+                        listaContas.appendChild(optionDefault('Selecione uma conta'));
+                        data.contas.forEach(conta => {
+                            const option = document.createElement('option');
+                            option.value = conta.numConta;
+                            option.textContent = `Conta: ${conta.numConta} - Tipo: ${conta.tipoConta} - Saldo: ${conta.saldo} - IDConta: ${conta.idConta}`;
+                            listaContas.appendChild(option);
+                        });
+                    } else {
+                        alert("Nenhuma conta encontrada para este CPF!");
+                    }
+                })
+                .catch(error => console.error("Erro ao buscar contas:", error));
+        }
+
+        function verificarCartao() {
+            const contaSelecionada = document.getElementById('listaContas').value;
+
+            fetch(`http://localhost:8080/cartao/${contaSelecionada}`)
+                 .then(response => {
+		            if (response.status === 404) {
+		                alert("Não existe cartões para esta conta")
+		                return [];
+		            }
+		            if (!response.ok) {
+		                throw new Error(`Erro HTTP: ${response.status}`);
+		            }
+		            return response.json(); // Aqui só entra se não for 404
+		        })
+                .then(data => {
+                    console.log(data);
+                    // Sempre mostrar o bloco de novoCartao
+                    document.getElementById('novoCartao').style.display = 'block';
+
+                    if (data && data.length > 0) {
+                        // Se houver cartões, exibir o bloco de informações e operações
+                        document.getElementById('cartaoInfo').style.display = 'block';
+                        const listaCartoes = document.getElementById('listaCartoes');
+                        listaCartoes.innerHTML = '';
+                        const optionDefault = (text) => {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.selected = true;
+                            option.textContent = text;
+                            return option;
+                        };
+                        listaCartoes.appendChild(optionDefault('Selecione um cartão'));
+                        data.forEach(cartao => {
+                            const option = document.createElement('option');
+                            option.value = cartao.numCartao;
+                            option.textContent = `Cartão: ${cartao.tipoCartao} - NumCartao: ${cartao.numCartao} - Limite: R$ ${cartao.limiteCredito} - Status: ${cartao.status ? 'Ativo' : 'Inativo'}`;
+                            listaCartoes.appendChild(option);
+                        });
+                        document.getElementById('operacoes').style.display = 'block';
+                    } else {
+                        // Se não houver cartões, esconder o bloco de operações e mostrar o bloco de novoCartao
+                        document.getElementById('cartaoInfo').style.display = 'none';
+                        document.getElementById('operacoes').style.display = 'none';
+                    }
+                })
+                .catch(error => console.error("Erro ao verificar cartões:", error));
+        }
+        function atualizarOperacoes() {
+            const cartaoSelecionado = document.getElementById('listaCartoes').value;
+            
+            // Se um cartão for selecionado, preencher o campo numCartao automaticamente
+            if (cartaoSelecionado) {
+                document.getElementById('numCartao').value = cartaoSelecionado;  
+                document.getElementById('operacoes').style.display = 'block'; 
+            }
+        }
+
+        function criarCartao(tipoCartao) {
+            const numeroConta = document.getElementById('listaContas').value; // Número da conta selecionada
+
+            // Verificação para garantir que o número da conta foi selecionado
+            if (!numeroConta) {
+                alert("Por favor, selecione uma conta.");
+                return;
+            }
+            //let tipoCartao = tipoCartao.value;
+            let diaVencimento = null;
+            if (tipoCartao === 'CREDITO' && !diaVencimento) {
+                diaVencimento = prompt("Insira a melhor data para Vencimento (1 a 31):");
+
+                // Validação para garantir que o valor de vencimento seja um número válido
+                if (isNaN(diaVencimento) || diaVencimento < 1 || diaVencimento > 31) {
+                    alert("Por favor, insira um número válido para o dia de vencimento (1 a 31).");
+                    return;
+                }
+            }
+            const requestData = {
+                    tipoCartao: tipoCartao,
+                    contaC: numeroConta,
+                    diaVencimento: tipoCartao === 'CREDITO' ? diaVencimento : null // Apenas envia data de vencimento se for cartão de crédito
+                };
+
+            console.log('Dados enviados para criação de cartão:', requestData);
+            // Montar a URL com query parameters
+            const url = `http://localhost:8080/cartao/emitir-cartao?tipoCartao=${tipoCartao}&diaVencimento=${diaVencimento}&contaC=${numeroConta}`;
+
+            // Requisição para criar o cartão
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro ao emitir cartão.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Cartão criado com sucesso!");
+            })
+            .catch(error => {
+                console.error("Erro ao criar cartão:", error);
+                alert("Erro ao criar cartão.");
+            });
+        }
+
+        function exibirCamposOperacao() {
+            const operacao = document.getElementById('operacao').value;
+            const valorOperacaoDiv = document.getElementById('valorOperacaoDiv');
+            const compraCartaoDiv = document.getElementById('compraCartaoDiv');
+            const limiteCartaoDiv = document.getElementById('limiteCartaoDiv');
+            const senhaCartaoDiv = document.getElementById('senhaCartaoDiv');
+            const statusCartaoDiv = document.getElementById('statusCartaoDiv');
+            
+            
+            
+
+            // Exibir campos comuns
+            valorOperacaoDiv.style.display = (["2", "3", "4", "6", "7"].includes(operacao)) ? 'block' : 'none';
+
+            // Campos específicos
+            compraCartaoDiv.style.display = (operacao === "7") ? 'block' : 'none'; // Compra no cartão
+            limiteCartaoDiv.style.display = (operacao === "9") ? 'block' : 'none'; // Alterar limite
+            senhaCartaoDiv.style.display = (operacao === "10") ? 'block' : 'none'; // Alterar senha
+            statusCartaoDiv.style.display = (operacao === "11") ? 'block' : 'none'; // Alterar status
+            document.getElementById("btnPagarFatura").style.display = (operacao === "8") ? 'inline-block' : 'none';
+
+            // Exibir o campo de data de vencimento se for um cartão de crédito
+           
+        }
+
+        function executarOperacao() {
+            const operacao = document.getElementById('operacao').value;
+            const valorOperacao = document.getElementById('valorOperacao').value;
+            const cpf = document.getElementById('cpf').value;
+            const contaSelecionada = document.getElementById('listaContas').value;
+            const listaCartoes = document.getElementById('listaCartoes');  // Pega o elemento de seleção de cartões
+            const numCartao = listaCartoes.value;  // Obtém o valor do cartão selecionado
+            const dataCompra = document.getElementById('dataCompra').value;
+            const novoLimite = document.getElementById('novoLimite').value;
+            const senhaAntiga = document.getElementById('senhaAntiga').value;
+            const senhaNova = document.getElementById('senhaNova').value;
+            const statusCartao = document.getElementById('statusCartao').value;
+            
+            if (!operacao) {
+                alert("Selecione uma operação.");
+                return;
+            }
+
+            if ((operacao === "2" || operacao === "3" || operacao === "4" || operacao === "6" || operacao === "7") && (!valorOperacao || valorOperacao <= 0)) {
+                alert("Digite um valor válido para a operação.");
+                return;
+            }
+
+            if (!contaSelecionada) {
+                alert("Selecione uma conta para a operação.");
+                return;
+            }
+
+            // Agora, com numCartao pegando diretamente do select, não é mais necessário digitar o número do cartão
+            if (!numCartao) {
+                alert("Selecione um cartão para a operação.");
+                return;
+            }
+
+            switch (operacao) {
+                case "7":
+                    realizarCompraCartao(numCartao, valorOperacao, dataCompra); // Passando a variável numCartao
+                    break;
+                case "8":
+                    consultarFaturaCartao(cpf, contaSelecionada);
+                    break;
+                case "9":
+                    alterarLimiteCartao(cpf, novoLimite, numCartao); // Passando a variável numCartao
+                    break;
+                case "10":
+                    alterarSenhaCartao(cpf, senhaAntiga, senhaNova, contaSelecionada);
+                    break;
+                case "11":
+                    alterarStatusCartao(cpf, statusCartao, contaSelecionada);
+                    break;
+                case "12":
+                    obterDadosCartao(numCartao);
+                    break;
+                default:
+                    alert("Operação inválida.");
+            }
+        }
+
+        // Funções para as operações com cartão
+		      function realizarCompraCartao() {
+			    const numCartaoInput = document.getElementById("numCartao");
+			    if (!numCartaoInput) {
+			        console.error("Elemento com ID 'numCartao' não encontrado!");
+			        return;
+			    }
+			
+			    const numCartao = numCartaoInput.value;
+			    const valorInput = document.getElementById("valorOperacao");
+			    const dataCompraInput = document.getElementById("dataCompra");
+			   
+			
+			    if (!valorInput || !dataCompraInput) {
+			        console.error("Campos de valor ou data da compra não encontrados!");
+			        return;
+			    }
+			    const valor = parseFloat(valorInput.value);
+			    const dataCompra = dataCompraInput.value;
+			
+			    const dadosCompra = {
+			        numCartao: numCartao,
+			        valor: valor,
+			        dataCompra: dataCompra
+			    };
+			
+			    fetch("http://localhost:8080/cartao/compra-cartao", {
+			        method: "POST",
+			        headers: {
+			            "Content-Type": "application/json"
+			        },
+			        body: JSON.stringify(dadosCompra)
+			    })
+			    .then(response => {
+			        if (!response.ok) {
+			            throw new Error("Erro ao efetuar a compra");
+			        }
+			        return response.text();
+			    })
+			    .then(data => {
+			        console.log("Resposta do servidor:", data);
+			        alert(data);
+			    })
+			    .catch(error => {
+			        console.error("Erro na compra com cartão:", error);
+			    });
+			}
+
+		    
+
+        function alterarLimiteCartao(cpf, novoLimite) {
+            const numCartao = document.getElementById("numCartao").value; // Pega o valor do campo de input
+
+            if (!numCartao) {
+                alert("Por favor, insira o número do cartão.");
+                return;
+            }
+
+            const requestData = {
+                novoLimite: novoLimite
+            };
+
+            fetch(`http://localhost:8080/cartao/alterar-limite/${numCartao}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.text()) // ou .json() se você estiver retornando JSON
+            .then(data => alert(data))
+            .catch(error => console.error("Erro ao alterar limite:", error));
+        }
+
+        function alterarSenhaCartao(cpf, senhaAntiga, senhaNova) {
+            const numCartao = document.getElementById("listaCartoes").value; // agora pegando o cartão selecionado
+
+            const requestData = {
+                senhaAntiga: parseInt(senhaAntiga),
+                senhaNova: parseInt(senhaNova)
+            };
+
+            fetch(`http://localhost:8080/cartao/alterar-senha/${numCartao}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => console.error("Erro ao alterar senha:", error));
+        }
+
+        function alterarStatusCartao(cpf, statusCartao) {
+            const numCartao = document.getElementById("listaCartoes").value;
+
+            if (!numCartao) {
+                alert("Selecione um cartão.");
+                return;
+            }
+
+            const requestData = {
+                cpf: cpf,
+                status: statusCartao === "true" // transforma string em boolean
+            };
+
+            fetch(`http://localhost:8080/cartao/alterar-status/${numCartao}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert("Status do cartão alterado com sucesso!");
+                console.log("Resposta:", data);
+            })
+            .catch(error => console.error("Erro ao alterar status:", error));
+        }
+        
+        function consultarFaturaCartao(cpf, contaSelecionada) {
+    	    const numCartao = document.getElementById("listaCartoes").value;
+
+    	    fetch(`http://localhost:8080/cartao/fatura/${numCartao}`)
+    	        .then(response => response.json())
+    	        .then(data => {
+    	            const fatura = parseFloat(data.fatura || 0).toFixed(2);
+    	            document.getElementById("valorFatura").textContent = fatura;
+    	            document.getElementById("faturaResultado").style.display = 'block';
+    	        })
+    	        .catch(error => {
+    	            console.error("Erro ao consultar fatura:", error);
+    	            alert("Erro ao consultar fatura.");
+    	        });
+    	}
+        
+        function pagarFaturaCartao() {
+            const numCartao = document.getElementById("listaCartoes").value;
+
+            if (!numCartao) {
+                alert("Selecione um cartão.");
+                return;
+            }
+
+            fetch(`http://localhost:8080/cartao/fatura/${numCartao}`)
+                .then(response => response.json())
+                .then(data => {
+                    const valorFatura = data.fatura;
+                    if (confirm(`Confirmar pagamento da fatura de R$ ${valorFatura.toFixed(2)}?`)) {
+                        const requestData = {
+                            numCartao: numCartao,
+                            valor: valorFatura
+                        };
+
+                        fetch(`http://localhost:8080/cartao/pagar-fatura`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestData)
+                        })
+                        .then(response => response.text())
+                        .then(data => alert(data))
+                        .catch(error => console.error("Erro ao pagar fatura:", error));
+                    }
+                })
+                .catch(error => console.error("Erro ao consultar fatura:", error));
+        }
+        
+		        function obterDadosCartao(numCartao) {
+		            fetch(`http://localhost:8080/cartao/dados/${numCartao}`)
+		                .then(response => {
+		                    if (!response.ok) {
+		                        throw new Error("Erro ao obter dados do cartão");
+		                    }
+		                    return response.json();
+		                })
+		                .then(data => {
+		                    // Exibe os dados do cartão no alert ou de forma mais bonita se quiser
+		                    let info = `
+		        Número do Cartão: ${data.numCartao}
+		        Tipo: ${data.tipoCartao}
+		        Limite: R$ ${parseFloat(data.limiteCredito).toFixed(2)}
+		        Status: ${data.status ? 'Ativo' : 'Inativo'}
+		        Data de Emissão: ${data.dataEmissao}
+		        Vencimento: Dia ${data.diaVencimento}
+		                    `;
+		                    alert(info);
+		                })
+		                .catch(error => {
+		                    console.error("Erro ao obter dados do cartão:", error);
+		                    alert("Erro ao obter dados do cartão.");
+		                });
+		        }
+    </script>
+</body>
+</html>

@@ -9,20 +9,13 @@ import java.util.List;
 public class Cliente {
 
     private Long idCliente;
-
     private String nome;
     private String cpf;
     private LocalDate dataNascimento;
-
     private String statusCpf;
-
     private Endereco endereco;
-
     private Categoria categoria;
-
-
     private List<Conta> contas = new ArrayList<Conta>();
-
     public Cliente() {
 
     }
