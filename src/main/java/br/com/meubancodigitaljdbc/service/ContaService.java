@@ -223,6 +223,9 @@ public class ContaService {
 
         Conta contaOrigem = contaDAO.buscarPorNumero(numContaOrigem);
         Conta contaDestino = contaDAO.buscarPorNumero(numContaDestino);
+        System.out.println("Saldo atual da conta origem: " + contaOrigem.getSaldo() + numContaOrigem);
+        System.out.println("Valor a transferir: " + valor);
+
 
         if (contaOrigem == null) {
             throw new IllegalArgumentException("Conta de origem não encontrada.");
@@ -248,11 +251,11 @@ public class ContaService {
             contaOrigem.setSaldo(contaOrigem.getSaldo() - valor);
         }
 
-        contaDAO.salvarConta(contaOrigem);
+        contaDAO.atualizarSaldo(contaOrigem.getIdConta(), contaOrigem.getSaldo());
 
 		// 	Se houve alguma modificação na conta de destino, salvar também
         if (contaDestino != null && (transferenciaPoupança || transferenciaOutrasContas)) {
-            contaDAO.salvarConta(contaDestino);
+            contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
         }
 
         return true;

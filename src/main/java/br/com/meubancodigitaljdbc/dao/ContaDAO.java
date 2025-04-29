@@ -59,14 +59,16 @@ public class ContaDAO {
     }
 
     // Método para buscar conta por número
-    public Conta buscarPorNumero(String numeroContaDestino) throws SQLException {
+    public Conta buscarPorNumero(String numeroConta) throws SQLException {
         String sql = "SELECT * FROM conta WHERE num_conta = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, numeroContaDestino);
+            stmt.setString(1, numeroConta);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
+                Conta conta = mapearConta(rs);
+                System.out.println("→ Conta encontrada: " + conta.getNumConta() + " | Saldo do banco: " + conta.getSaldo());
                 return mapearConta(rs);
             }
         }
@@ -108,8 +110,6 @@ public class ContaDAO {
         TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
         long clienteId = rs.getLong("cliente_id");
 
-      //  System.out.println("Cliente ID vindo do banco: " + clienteId);
-
         Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
         if (optionalCliente.isEmpty()) {
             throw new RuntimeException("Cliente não encontrado com ID: " + clienteId);
@@ -125,7 +125,8 @@ public class ContaDAO {
         }
 
         conta.setIdConta(rs.getLong("id_conta"));
-        conta.setSaldo(rs.getDouble("saldo"));
+        double saldo = rs.getDouble("saldo");
+        conta.setSaldo(saldo);
         return conta;
     }
 

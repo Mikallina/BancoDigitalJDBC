@@ -9,7 +9,6 @@ public class ContaResponseDTO {
     private String cpf;
     private Conta conta;
 
-    // Construtores, getters e setters
 
     public ContaResponseDTO(String nome, String cpf, Conta conta) {
         this.nome = nome;
