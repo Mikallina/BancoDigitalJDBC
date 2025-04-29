@@ -103,6 +103,10 @@ public class ClienteDAO {
     }
 
     public Optional<Cliente> findById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID do cliente não pode ser null");
+        }
+
         String sql = "SELECT * FROM cliente WHERE id_cliente = ?";
 
         try (Connection connection = dataSource.getConnection();

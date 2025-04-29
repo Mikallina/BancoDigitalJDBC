@@ -53,7 +53,7 @@ public class ContaController {
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			List<Conta> contas = contaService.buscarContasPorCliente(cliente);
-			cliente.setContas(contas); // POPULA as contas
+			cliente.setContas(contas);
 			return ResponseEntity.ok(cliente); // Retorna o cliente com as contas
 		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -61,8 +61,7 @@ public class ContaController {
 
 	@PostMapping("/depositar")
 	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws SQLException {
-		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumConta(), depositoDTO.getValor());
-
+		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
 		if (sucesso) {
 			return ResponseEntity.ok("Depósito realizado com sucesso!");
 		} else {

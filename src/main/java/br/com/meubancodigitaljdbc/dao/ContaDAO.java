@@ -27,6 +27,13 @@ public class ContaDAO {
     }
 
     public Conta salvarConta(Conta conta) throws SQLException {
+
+        Optional<Cliente> optionalCliente = clienteDAO.findById(conta.getCliente().getIdCliente());
+        if (optionalCliente.isEmpty()) {
+            throw new RuntimeException("Cliente não encontrado com ID: " + conta.getCliente().getIdCliente());
+        }
+        Cliente cliente = optionalCliente.get();
+
         String sql = "INSERT INTO conta (tipo_conta, agencia, num_conta, saldo, cliente_id) VALUES (?, ?, ?, ?, ?)";
 
 
@@ -52,13 +59,11 @@ public class ContaDAO {
     }
 
     // Método para buscar conta por número
-    public Conta buscarPorNumero(String numeroConta) throws SQLException {
+    public Conta buscarPorNumero(String numeroContaDestino) throws SQLException {
         String sql = "SELECT * FROM conta WHERE num_conta = ?";
-
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, numeroConta);
+            stmt.setString(1, numeroContaDestino);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -103,9 +108,16 @@ public class ContaDAO {
         TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
         long clienteId = rs.getLong("cliente_id");
 
-        Cliente cliente = clienteDAO.buscarPorId(clienteId);
-        System.out.println("Id Cliente: " + clienteId);
+      //  System.out.println("Cliente ID vindo do banco: " + clienteId);
+
+        Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
+        if (optionalCliente.isEmpty()) {
+            throw new RuntimeException("Cliente não encontrado com ID: " + clienteId);
+        }
+
+        Cliente cliente = optionalCliente.get();
         Conta conta;
+
         if (tipo == TipoConta.CORRENTE) {
             conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
         } else {
@@ -116,9 +128,6 @@ public class ContaDAO {
         conta.setSaldo(rs.getDouble("saldo"));
         return conta;
     }
-
-
-
 
     // Método para buscar todas as contas
     public List<Conta> findAll() {

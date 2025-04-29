@@ -128,7 +128,7 @@ public class CartaoController {
 	@PostMapping("/compra-cartao")
 	public ResponseEntity<String> realizarPagamento(@RequestBody CompraCartaoDTO compraCartaoDTO) throws Exception {
 
-		String numCartao = compraCartaoDTO.getNumCartao(); // O número do cartão
+		String numCartao = compraCartaoDTO.getNumCartao();
 		Cartao cartao = cartaoService.buscarCartaoPorNumero(numCartao);
 		System.out.println(numCartao);
 		if (cartao == null) {

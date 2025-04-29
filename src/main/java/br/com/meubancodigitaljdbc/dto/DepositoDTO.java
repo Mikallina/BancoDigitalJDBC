@@ -4,25 +4,25 @@ package br.com.meubancodigitaljdbc.dto;
 
 public class DepositoDTO {
 	
-	private Long id;
+	private String cpf;
     private double valor;
-    private String numConta;
+    private String numContaDestino;
     
 
-	public String getNumConta() {
-		return numConta;
+	public String getNumContaDestino() {
+		return numContaDestino;
 	}
 
-	public void setNumConta(String numConta) {
-		this.numConta = numConta;
+	public void setNumContaDestino(String numConta) {
+		this.numContaDestino = numConta;
 	}
 
-	public Long getId() {
-		return id;
+	public String getCpf() {
+		return cpf;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
 	}
 
 	public double getValor() {
@@ -32,11 +32,11 @@ public class DepositoDTO {
 		this.valor = valor;
 	}
 
-	public DepositoDTO(Long id, double valor, String numConta) {
+	public DepositoDTO(String cpf, double valor, String numContaDestino) {
 		super();
-		this.id = id;
+		this.cpf = cpf;
 		this.valor = valor;
-		this.numConta = numConta;
+		this.numContaDestino = numContaDestino;
 	}
     
     
