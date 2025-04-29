@@ -2,9 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Endereco;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,8 +11,12 @@ import java.util.Optional;
 @Repository
 public class ClienteDAO {
 
-    @Autowired
-    private DataSource dataSource;
+
+    private final DataSource dataSource;
+
+    public ClienteDAO(DataSource dataSource){
+        this.dataSource = dataSource;
+    }
 
     public void save(Cliente cliente) throws SQLException {
         String sql = "INSERT INTO cliente (cpf, nome, data_nascimento, categoria, bairro, cep, complemento, logradouro, numero, localidade, uf) " +
