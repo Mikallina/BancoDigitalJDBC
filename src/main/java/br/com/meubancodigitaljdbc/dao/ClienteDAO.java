@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.dao;
 
+import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Endereco;
 import org.springframework.stereotype.Repository;
@@ -44,24 +45,6 @@ public class ClienteDAO {
                 }
             }
         }
-    }
-
-    public Cliente buscarPorId(Long idCliente) throws SQLException {
-        String sql = "SELECT * FROM cliente WHERE id_cliente = ?";
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setLong(1, idCliente);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                Cliente cliente = new Cliente();
-                cliente.setNome(rs.getString("nome"));
-                cliente.setCpf(rs.getString("cpf"));
-                return cliente;
-            }
-        }
-        return null;
     }
 
     public Cliente findByCpf(String cpf) {
@@ -146,7 +129,7 @@ public class ClienteDAO {
         cliente.setNome(rs.getString("nome"));
         cliente.setCpf(rs.getString("cpf"));
         cliente.setDataNascimento(rs.getDate("data_nascimento").toLocalDate());
-        cliente.setCategoria(br.com.meubancodigitaljdbc.enuns.Categoria.valueOf(rs.getString("categoria")));
+        cliente.setCategoria(Categoria.valueOf(rs.getString("categoria")));
 
         Endereco endereco = new Endereco();
         endereco.setLogradouro(rs.getString("logradouro"));

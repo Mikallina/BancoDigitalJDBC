@@ -17,15 +17,17 @@ import java.util.Optional;
 @Repository
 public class CartaoDAO {
 
-    @Autowired
     private DataSource dataSource;
 
+    @Autowired
     public CartaoDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     @Autowired
     private ContaDAO contaDAO;
+
+
 
     public Cartao save(Cartao cartao) throws SQLException {
         if (cartao.getConta() == null || cartao.getConta().getIdConta() == null) {
@@ -121,7 +123,7 @@ public class CartaoDAO {
                 "FROM cartao c " +
                 "LEFT JOIN cartao_credito cc ON cc.id_cartao = c.id_cartao " +
                 "LEFT JOIN cartao_debito cd ON cd.id_cartao = c.id_cartao " +
-                "WHERE c.id_conta = ?";;
+                "WHERE c.id_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -143,7 +145,7 @@ public class CartaoDAO {
                 "FROM cartao c " +
                 "LEFT JOIN cartao_credito cc ON cc.id_cartao = c.id_cartao " +
                 "LEFT JOIN cartao_debito cd ON cd.id_cartao = c.id_cartao " +
-                "WHERE c.num_cartao = ?";;
+                "WHERE c.num_cartao = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -174,10 +176,9 @@ public class CartaoDAO {
             stmt.executeUpdate();
         }
 
-         if (cartao instanceof CartaoCredito) {
-            CartaoCredito credito = (CartaoCredito) cartao;
+         if (cartao instanceof CartaoCredito credito) {
 
-            String sqlCredito = "UPDATE cartao_credito SET limite_credito = ? WHERE id_cartao = ?";
+             String sqlCredito = "UPDATE cartao_credito SET limite_credito = ? WHERE id_cartao = ?";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
 
@@ -200,7 +201,7 @@ public class CartaoDAO {
             credito.setLimiteCredito(rs.getDouble("limite_credito"));
             credito.setDiaVencimento(rs.getString("dia_vencimento"));
             credito.getSaldoMes();
-            credito.setIdCartao(rs.getLong("id_cartao"));
+            //credito.setIdCartao(rs.getLong("id_cartao"));
             Date dataCompra = rs.getDate("data_compra");
             if (dataCompra != null) {
                 credito.setDataCompra(dataCompra.toLocalDate());

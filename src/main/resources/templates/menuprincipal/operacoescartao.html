@@ -148,7 +148,7 @@
 	<script>
         function pesquisarContas() {
             const cpf = document.getElementById('cpf').value;
-            fetch(`http://localhost:8080/cliente/buscarCpf/${cpf}`)
+            fetch(`http://localhost:8080/conta/buscarConta/${cpf}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.contas && data.contas.length > 0) {
@@ -239,7 +239,7 @@
         }
 
         function criarCartao(tipoCartao) {
-            const numeroConta = document.getElementById('listaContas').value; // Número da conta selecionada
+            const numeroConta = document.getElementById('listaContas').value;
 
             // Verificação para garantir que o número da conta foi selecionado
             if (!numeroConta) {
@@ -260,7 +260,7 @@
             const requestData = {
                     tipoCartao: tipoCartao,
                     contaC: numeroConta,
-                    diaVencimento: tipoCartao === 'CREDITO' ? diaVencimento : null // Apenas envia data de vencimento se for cartão de crédito
+                    diaVencimento: tipoCartao === 'CREDITO' ? diaVencimento : null
                 };
 
             console.log('Dados enviados para criação de cartão:', requestData);

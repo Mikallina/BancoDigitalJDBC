@@ -77,7 +77,7 @@ public class CartaoController {
 
 	@GetMapping("/dados/{numCartao}")
 	public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao) throws SQLException {
-		Cartao cartao = (Cartao) cartaoService.buscarCartaoPorCliente(numCartao);
+		Cartao cartao = cartaoService.buscarCartaoPorCliente(numCartao);
 		if (cartao == null) {
 			return ResponseEntity.notFound().build();
 		}
