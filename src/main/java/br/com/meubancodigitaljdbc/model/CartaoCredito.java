@@ -22,14 +22,15 @@ public class CartaoCredito extends Cartao{
     public CartaoCredito() {
     }
 
-    public CartaoCredito(Conta conta, int senha, String numCartao, TipoCartao tipoCartao, double limiteCredito,
-                         String diaVencimento, LocalDate dataVencimento) {
-        super(numCartao, conta, tipoCartao, senha, true);
-        this.limiteCredito = limiteCredito;
-        this.tipoCartao = tipoCartao;
-        this.diaVencimento = diaVencimento;
-        this.dataVencimento = dataVencimento;
-
+    public CartaoCredito(Conta conta, int senha, String numCartao, TipoCartao tipoCartao, double limite, String diaVencimento, LocalDate dataVencimento) {
+        super();
+        this.setConta(conta);
+        this.setSenha(senha);
+        this.setNumCartao(numCartao);
+        this.setTipoCartao(tipoCartao);
+        this.setLimiteCredito(limite);
+        this.setDiaVencimento(diaVencimento);
+        this.setDataVencimento(dataVencimento);
     }
 
     public void alterarLimiteCredito(double novoLimite) {
@@ -45,16 +46,12 @@ public class CartaoCredito extends Cartao{
         return limiteCredito;
     }
 
-    public double getSaldoCredito() {
-        return saldoCredito;
-    }
-
     public void setSaldoCredito(double saldoCredito) {
         this.saldoCredito = saldoCredito;
     }
 
     public double getSaldoMes() {
-        return saldoMes;
+        return this.saldoMes;
     }
 
     public double getTaxa() {

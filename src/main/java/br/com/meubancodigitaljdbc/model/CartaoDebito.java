@@ -13,9 +13,12 @@ public class CartaoDebito extends Cartao{
     public CartaoDebito() {}
 
     public CartaoDebito(Conta conta, String numCartao, TipoCartao tipoCartao, int senha, double limiteDiario) {
-        super(numCartao, conta, tipoCartao, senha, true);
-        this.tipoCartao = tipoCartao;
-        this.limiteDiario = limiteDiario;
+        super();
+        this.setConta(conta);
+        this.setNumCartao(numCartao);
+        this.setTipoCartao(tipoCartao);
+        this.setSenha(senha);
+        this.setLimiteDiario(limiteDiario);
     }
 
     public void alterarLimiteDebito(double novoLimite) {

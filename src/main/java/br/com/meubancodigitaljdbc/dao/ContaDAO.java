@@ -61,7 +61,7 @@ public class ContaDAO {
 
     // Método para buscar conta por número
     public Conta buscarPorNumero(String numeroConta) throws SQLException {
-        String sql = "SELECT * FROM conta WHERE num_conta = ?";
+        String sql = "SELECT c.*, cl.categoria FROM conta c JOIN cliente cl ON c.cliente_id = cl.id_cliente WHERE c.num_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -80,12 +80,10 @@ public class ContaDAO {
 
 
     public Optional<Conta> findById(Long id) {
+        String sql = "SELECT c.*, cl.categoria FROM conta c JOIN cliente cl ON c.cliente_id = cl.id_cliente WHERE c.id_conta = ?";
         if (id == null) {
             throw new IllegalArgumentException("ID da conta não pode ser null");
         }
-
-        String sql = "SELECT * FROM conta WHERE id_conta = ?";
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
@@ -103,8 +101,8 @@ public class ContaDAO {
         return Optional.empty();
     }
 
-    private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
 
+    private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
         Conta conta = new ContaCorrente();
         conta.setTipoConta(TipoConta.valueOf(rs.getString("tipo_conta")));
         conta.setIdConta(rs.getLong("id_conta"));
@@ -114,7 +112,15 @@ public class ContaDAO {
 
         Cliente cliente = new Cliente();
         cliente.setIdCliente(rs.getLong("cliente_id"));
-        //cliente.setCategoria(Categoria.valueOf(rs.getString("categoria")));
+
+        String categoriaStr = rs.getString("categoria");
+
+        if (categoriaStr != null && !categoriaStr.isEmpty()) {
+            cliente.setCategoria(Categoria.valueOf(categoriaStr));
+        } else {
+            throw new SQLException("Categoria não encontrada ou inválida.");
+        }
+
         conta.setCliente(cliente);
 
         return conta;

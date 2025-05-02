@@ -17,6 +17,8 @@ import br.com.meubancodigitaljdbc.model.Conta;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+
 
 @Service
 public class CartaoService {
@@ -26,6 +28,14 @@ public class CartaoService {
 	
 	@Autowired
 	private ContaDAO contaDAO;
+	@Autowired
+	private DataSource dataSource;
+
+	public CartaoService(CartaoDAO cartaoDAO, ContaDAO contaDAO, DataSource dataSource) {
+		this.cartaoDAO = cartaoDAO;
+		this.contaDAO = contaDAO;
+		this.dataSource = dataSource;
+	}
 
 	public void salvarCartao(Cartao cartao, boolean isAtualizar) throws Exception {
 		if (cartao == null || cartao.getNumCartao() == null) {
@@ -74,18 +84,20 @@ public class CartaoService {
 		String numCartao = gerarNumeroCartao(tipoCartao);
 
 		if (tipoCartao == TipoCartao.CREDITO) {
-			cartao = new CartaoCredito(conta, senha, numCartao, TipoCartao.CREDITO, limiteDeCredito(conta),
-					diaVencimento, dataVencimento);
+			cartao = new CartaoCredito(conta, senha, numCartao, TipoCartao.CREDITO,
+					limiteDeCredito(conta), diaVencimento, dataVencimento);
 		} else if (tipoCartao == TipoCartao.DEBITO) {
-			cartao = new CartaoDebito(conta, numCartao, TipoCartao.DEBITO, senha, limiteDiario(conta));
+			cartao = new CartaoDebito(conta, numCartao, TipoCartao.DEBITO,
+					senha, limiteDiario(conta));
 		} else {
 			throw new IllegalArgumentException("Tipo de cartão inválido.");
 		}
 
-		cartaoDAO.save(cartao);
 
-		return cartao;
+		return cartaoDAO.save(cartao);
 	}
+
+
 
 	public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao) throws SQLException {
 		if (!cartao.isStatus()) {
@@ -113,14 +125,12 @@ public class CartaoService {
 				throw new IllegalArgumentException("Status do Cartão Desativado");
 			}
 
-			if (cartao instanceof CartaoCredito) {
-				CartaoCredito cartaoCredito = (CartaoCredito) cartao;
+			if (cartao instanceof CartaoCredito cartaoCredito) {
 				cartaoCredito.alterarLimiteCredito(novoLimite);
 				cartaoDAO.save(cartaoCredito);
 				System.out.println("Limite de crédito atualizado para: R$ " + novoLimite);
 				return true;
-			} else if (cartao instanceof CartaoDebito) {
-				CartaoDebito cartaoDebito = (CartaoDebito) cartao;
+			} else if (cartao instanceof CartaoDebito cartaoDebito) {
 				cartaoDebito.alterarLimiteDebito(novoLimite);
 				cartaoDAO.save(cartaoDebito);
 				System.out.println("Limite de débito atualizado para: R$ " + novoLimite);
@@ -139,7 +149,7 @@ public class CartaoService {
 		if (cartaoOptional.isPresent()) {
 			Cartao cartao = cartaoOptional.get();
 			cartao.setStatus(novoStatus);
-			cartaoDAO.save(cartao);
+			cartaoDAO.atualizar(cartao);
 			System.out.println("Status do cartão de número " + cartao.getNumCartao() + " alterado para " + novoStatus);
 			return true;
 		} else {
@@ -150,35 +160,34 @@ public class CartaoService {
 	private double limiteDeCredito(Conta conta) {
 		Categoria categoria = conta.getCliente().getCategoria();
 		switch (categoria) {
-
-		case COMUM: {
-			return 1000.00;
-		}
-		case SUPER: {
-			return 5000.00;
-		}
-		case PREMIUM: {
-			return 10000.00;
-		}
-		default:
-			throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
+			case COMUM -> {
+				return 1000.00;
+			}
+			case SUPER -> {
+				return 5000.00;
+			}
+			case PREMIUM -> {
+				return 10000.00;
+			}
+			default ->
+					throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
 		}
 	}
 
 	private double limiteDiario(Conta conta) {
 		Categoria categoria = conta.getCliente().getCategoria();
 		switch (categoria) {
-		case COMUM: {
-			return 500.00;
-		}
-		case SUPER: {
-			return 1000.00;
-		}
-		case PREMIUM: {
-			return 5000.00;
-		}
-		default:
-			throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
+			case COMUM -> {
+				return 500.00;
+			}
+			case SUPER -> {
+				return 1000.00;
+			}
+			case PREMIUM -> {
+				return 5000.00;
+			}
+			default ->
+					throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
 		}
 	}
 
@@ -260,7 +269,7 @@ public class CartaoService {
 				cartaoCredito.setPagamento(cartaoCredito.getPagamento() + valor);
 
 				cartaoCredito.setDataCompra(dataCompra);
-				salvarCartao(cartaoCredito, true);
+				cartaoDAO.atualizar(cartao);
 
 				System.out.println("Pagamento realizado com sucesso.");
 				return true;
@@ -277,7 +286,7 @@ public class CartaoService {
 	public boolean realizarPagamentoFatura(String numCartao, double valorPagamento) throws Exception {
 	    Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
 
-	    if (cartao == null || !(cartao instanceof CartaoCredito)) {
+	    if (!(cartao instanceof CartaoCredito)) {
 	        throw new RuntimeException("Cartão de crédito não encontrado ou tipo de cartão inválido.");
 	    }
 

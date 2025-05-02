@@ -48,7 +48,7 @@ public class CartaoController {
 
 			return ResponseEntity.ok(cartao);
 		} else {
-			// Caso a conta não exista, retornar 404
+
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
 	}
@@ -75,7 +75,7 @@ public class CartaoController {
 		}
 	}
 
-	@GetMapping("/obter-dados/{idCartao}")
+	@GetMapping("/dados/{numCartao}")
 	public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao) throws SQLException {
 		Cartao cartao = (Cartao) cartaoService.buscarCartaoPorCliente(numCartao);
 		if (cartao == null) {
