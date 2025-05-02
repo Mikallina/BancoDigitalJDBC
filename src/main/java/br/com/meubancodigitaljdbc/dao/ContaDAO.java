@@ -161,6 +161,8 @@ public class ContaDAO {
     private Conta mapearConta(ResultSet rs) throws SQLException {
         TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
         long clienteId = rs.getLong("cliente_id");
+
+        // Busca o cliente associada à conta
         Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
 
         if (optionalCliente.isEmpty()) {
@@ -168,9 +170,18 @@ public class ContaDAO {
         }
 
         Cliente cliente = optionalCliente.get();
+
+        // Verifica se o cliente não é nulo e se a categoria do cliente está presente
+        if (cliente == null) {
+            throw new RuntimeException("Cliente é nulo.");
+        }
+        if (cliente.getCategoria() == null) {
+            throw new RuntimeException("Categoria do cliente está nula.");
+        }
+
         Conta conta;
 
-        // A lógica de mapeamento de tipo de conta (Corrente ou Poupança)
+        // Mapeia a conta de acordo com o tipo
         if (tipo == TipoConta.CORRENTE) {
             conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
         } else if (tipo == TipoConta.POUPANCA) {
@@ -179,12 +190,28 @@ public class ContaDAO {
             throw new RuntimeException("Tipo de conta desconhecido: " + tipo);
         }
 
+        // Define os dados da conta
         conta.setIdConta(rs.getLong("id_conta"));
         double saldo = rs.getDouble("saldo");
         conta.setSaldo(saldo);
 
         // Retorna a conta com o cliente corretamente associado
         return conta;
+    }
+    public Conta atualizarConta(Conta conta) throws SQLException {
+        String sql = "UPDATE conta SET saldo = ?, agencia = ?, num_conta = ?, tipo_conta = ? WHERE id_conta = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, conta.getSaldo());
+            stmt.setInt(2, conta.getAgencia());
+            stmt.setString(3, conta.getNumConta());
+            stmt.setString(4, conta.getTipoConta().name());
+            stmt.setLong(5, conta.getIdConta());
+
+            stmt.executeUpdate();
+            return conta;
+        }
     }
 
 
@@ -228,4 +255,43 @@ public class ContaDAO {
         return contas;
     }
 
+
+    public Optional<Object> buscarPorIdConta(Long idConta) throws SQLException {
+        String sql = "SELECT * FROM conta WHERE id_conta = ?";  // Ajuste conforme sua tabela e banco de dados
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idConta);  // Define o valor do parâmetro na consulta
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    // Aqui você verifica o tipo de conta (Conta Corrente, Poupança, etc.)
+                    String tipoConta = rs.getString("tipo_conta");  // Ajuste conforme seu banco
+
+                    // Criação do objeto Conta, ou suas subclasses (ContaCorrente, ContaPoupanca)
+                    Conta conta = null;
+                    if ("Corrente".equals(tipoConta)) {
+                        conta = new ContaCorrente();
+                    } else if ("Poupanca".equals(tipoConta)) {
+                        conta = new ContaPoupanca();
+                    }
+
+                    // Preenche os dados da conta
+                    if (conta != null) {
+                        conta.setIdConta(rs.getLong("id_conta"));
+                        conta.setNumConta(rs.getString("num_conta"));
+                        conta.setSaldo(rs.getDouble("saldo"));
+                        // Preencher outros campos necessários
+                    }
+
+                    // Retorna a conta dentro de um Optional
+                    return Optional.ofNullable(conta);
+                } else {
+                    // Se não encontrar a conta, retorna um Optional vazio
+                    return Optional.empty();
+                }
+            }
+        }
+    }
 }

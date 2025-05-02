@@ -58,7 +58,7 @@ public class ContaController {
 	}
 
 	@PostMapping("/depositar")
-	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws SQLException {
+	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception {
 		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
 		if (sucesso) {
 			return ResponseEntity.ok("Depósito realizado com sucesso!");
@@ -104,46 +104,38 @@ public class ContaController {
 		}
 	}
 
-	@PutMapping("/{cpf}/{numConta}/manutencao")
-	public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable String cpf,
-														@PathVariable String numConta,
-														@RequestParam TipoConta tipoConta) {
+	@PutMapping("/{idConta}/manutencao")
+	public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta) {
 
 		try {
-			// Chama o service para aplicar a taxa ou rendimento com base no CPF e número da conta
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(cpf, numConta, tipoConta, true);
-
+			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
 			if (sucesso) {
 				return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
 			}
-
-		} catch (IllegalArgumentException | SQLException e) {
-			// Se houver exceções, retorna o erro
+		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
+
 	}
 
 
-	@PutMapping("/{cpf}/{numConta}/rendimentos")
-	public ResponseEntity<String> aplicarRendimentos(@PathVariable String cpf,
-													 @PathVariable String numConta,
-													 @RequestParam TipoConta tipoConta) {
-
+	@PutMapping("/{idConta}/rendimentos")
+	public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta) {
 		try {
-			// Chama o service para aplicar o rendimento com base no CPF e número da conta
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(cpf, numConta, tipoConta, false);
-
+			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
 			if (sucesso) {
 				return ResponseEntity.ok("Rendimento aplicado com sucesso");
 			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar o rendimento");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
 			}
-
-		} catch (IllegalArgumentException | SQLException e) {
-			// Se houver exceções, retorna o erro
+		} catch (IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

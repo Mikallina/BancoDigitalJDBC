@@ -5,14 +5,14 @@ import br.com.meubancodigitaljdbc.dao.ContaCorrenteDAO;
 import br.com.meubancodigitaljdbc.dao.ContaDAO;
 import br.com.meubancodigitaljdbc.dao.ContaPoupancaDAO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
-import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.model.Conta;
-import br.com.meubancodigitaljdbc.model.ContaCorrente;
-import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -30,25 +30,18 @@ public class ContaService {
     private DataSource dataSource;
     double taxaRendimento = 0;
 
-    public void salvarConta(Cliente cliente, Conta conta, TipoConta tipoConta) throws SQLException {
-        if (conta.getNumConta() == null) {
-            throw new IllegalArgumentException("Erro: O número da conta é obrigatório.");
+    public void salvarConta(Conta conta, boolean isAtualizar) throws Exception {
+        if (conta == null || conta.getNumConta() == null) {
+            throw new IllegalArgumentException("Erro: Tentativa de Salvar o Cartão nulo");
         }
-        if (cliente == null) {
-            throw new IllegalArgumentException("Erro: Cliente inválido");
+        if (isAtualizar) {
+
+            contaDAO.atualizarConta(conta);
+            System.out.println("Cartão atualizado: ");
+        } else {
+            contaDAO.salvarConta(conta);
+            System.out.println("Novo cartão adicionado: ");
         }
-
-        if (conta instanceof ContaCorrente) {
-            taxaManutencaoCC(cliente, tipoConta, (ContaCorrente) conta);
-        }
-
-        if (conta instanceof ContaPoupanca) {
-            taxaManutencaoCP(cliente, tipoConta, (ContaPoupanca) conta);
-        }
-
-        contaDAO.salvarConta(conta);
-
-        System.out.println("Conta salva com sucesso: " + conta.getNumConta());
     }
 
     public List<Conta> buscarContasPorCliente(Cliente cliente) throws SQLException {
@@ -105,45 +98,104 @@ public class ContaService {
         return contaDAO.salvarConta(conta);
     }
 
-    public boolean aplicarTaxaOuRendimento(String cpf, String numConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException {
-        Conta conta = buscarContaPorClienteEConta(cpf, numConta);
+    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws Exception {
+
+        Conta conta = buscarContaPorId(idConta);
 
         if (conta == null) {
             throw new IllegalArgumentException("Conta não encontrada.");
         }
+
         double valorAplicado;
 
+        // Verificação para aplicar a taxa de manutenção
         if (aplicarTaxa) {
-            if (!(conta instanceof ContaCorrente)) {
+            if (tipoConta == TipoConta.CORRENTE && conta instanceof ContaCorrente) {
+                ContaCorrente contaCorrente = (ContaCorrente) conta;
+                Cliente cliente = contaCorrente.getCliente();
+                valorAplicado = taxaManutencaoCC(cliente, tipoConta, contaCorrente);
+                contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
+                ContaCorrenteDAO contaCorrenteDAO = new ContaCorrenteDAO(dataSource);
+                contaCorrenteDAO.atualizarConta(contaCorrente);
+            } else {
                 throw new IllegalArgumentException("Este endpoint é apenas para contas correntes");
             }
-
-            ContaCorrente contaCorrente = (ContaCorrente) conta;
-            Cliente cliente = contaCorrente.getCliente();
-            valorAplicado = taxaManutencaoCC(cliente, tipoConta, contaCorrente);
-            contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
-
-            // Usar o DAO específico para ContaCorrente
-            ContaCorrenteDAO contaCorrenteDAO = new ContaCorrenteDAO(dataSource);
-            contaCorrenteDAO.salvarConta(contaCorrente);  // Salva a conta corrente no banco de dados
         } else {
-            // Filtra conta poupança
-            if (!(conta instanceof ContaPoupanca)) {
+            if (tipoConta == TipoConta.POUPANCA && conta instanceof ContaPoupanca) {
+                ContaPoupanca contaPoupanca = (ContaPoupanca) conta;
+                Cliente cliente = contaPoupanca.getCliente();
+                valorAplicado = taxaManutencaoCP(cliente, tipoConta, contaPoupanca);  // Calcula o rendimento
+                contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);  // Atualiza o saldo
+                ContaPoupancaDAO contaPoupancaDAO = new ContaPoupancaDAO(dataSource);
+                contaPoupancaDAO.atualizarConta(contaPoupanca);  // Atualiza a conta poupança no banco
+            } else {
                 throw new IllegalArgumentException("Este endpoint é apenas para contas poupanças");
             }
-
-            ContaPoupanca contaPoupanca = (ContaPoupanca) conta;
-            Cliente cliente = contaPoupanca.getCliente();
-            valorAplicado = taxaManutencaoCP(cliente, tipoConta, contaPoupanca);
-            contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);
-
-            ContaPoupancaDAO contaPoupancaDAO = new ContaPoupancaDAO(dataSource);
-            contaPoupancaDAO.salvarConta(contaPoupanca);
         }
 
-        contaDAO.salvarConta(conta);
-
+        // No final, salvamos a conta no banco de dados, para garantir que as mudanças sejam persistidas
+        salvarConta(conta, true);
         return true;
+    }
+
+    public Conta buscarContaPorId(Long idConta) throws SQLException {
+        String sql = "SELECT * FROM conta WHERE id_conta = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idConta);  // Definindo o valor do idConta na consulta
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Conta conta = mapearConta(rs);
+                    return conta;
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
+    private Conta mapearConta(ResultSet rs) throws SQLException {
+        Long idConta = rs.getLong("id_conta");
+        String numConta = rs.getString("num_conta");
+        double saldo = rs.getDouble("saldo");
+        int agencia = rs.getInt("agencia");
+        String tipoContaStr = rs.getString("tipo_conta");
+        Long clienteId = rs.getLong("cliente_id");
+
+        TipoConta tipoConta = TipoConta.valueOf(tipoContaStr);
+
+        // Buscando o cliente
+        Cliente cliente = clienteDAO.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + clienteId));
+
+        Conta conta;
+
+        if (tipoConta == TipoConta.CORRENTE) {
+            ContaCorrente contaCorrente = new ContaCorrente(cliente, agencia, numConta, tipoConta);
+            contaCorrente.setIdConta(idConta);
+            contaCorrente.setSaldo(saldo);
+
+            // opcional: buscar taxa_manutencao da tabela conta_corrente se necessário
+            // contaCorrente.setTaxaManutencao(...)
+
+            conta = contaCorrente;
+        } else if (tipoConta == TipoConta.POUPANCA) {
+            ContaPoupanca contaPoupanca = new ContaPoupanca(cliente, agencia, numConta, tipoConta);
+            contaPoupanca.setIdConta(idConta);
+            contaPoupanca.setSaldo(saldo);
+
+            // opcional: buscar taxa_rendimento da tabela conta_poupanca se necessário
+            // contaPoupanca.setTaxaRendimento(...)
+
+            conta = contaPoupanca;
+        } else {
+            throw new SQLException("Tipo de conta desconhecido: " + tipoContaStr);
+        }
+
+        return conta;
     }
 
 
@@ -219,7 +271,7 @@ public class ContaService {
         return 0;
     }
 
-    public boolean realizarDeposito(String numContaDestino, double valor) throws SQLException {
+    public boolean realizarDeposito(String numContaDestino, double valor) throws Exception {
         if (valor <= 0) {
             throw new IllegalArgumentException("Valor do depósito não pode ser zero");
         }
@@ -232,7 +284,7 @@ public class ContaService {
 
         double novoSaldo = conta.getSaldo() + valor;
         conta.setSaldo(novoSaldo);
-        contaDAO.salvarConta(conta);
+        salvarConta(conta, true);
 
         return true;
     }
@@ -272,7 +324,7 @@ public class ContaService {
 
         contaDAO.atualizarSaldo(contaOrigem.getIdConta(), contaOrigem.getSaldo());
 
-		// 	Se houve alguma modificação na conta de destino, salvar também
+        // 	Se houve alguma modificação na conta de destino, salvar também
         if (contaDestino != null && (transferenciaPoupança || transferenciaOutrasContas)) {
             contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
         }
@@ -286,18 +338,42 @@ public class ContaService {
 
     public Conta buscarContaPorClienteEConta(String cpf, String numConta) throws SQLException {
         // Busca o cliente com o CPF fornecido
-        Cliente cliente = clienteDAO.findByCpf(cpf);
-
+        Cliente cliente = buscarClientePorCpf(cpf);  // Assumindo que existe um método para buscar cliente pelo CPF
         if (cliente == null) {
             throw new IllegalArgumentException("Cliente não encontrado.");
         }
 
-        // Busca as contas do cliente
+        // Agora, busca as contas desse cliente pelo id
         List<Conta> contas = contaDAO.buscarPorClienteId(cliente.getIdCliente());
 
         // Filtra a conta com base no número da conta
-        return contas.stream().filter(c -> c.getNumConta().equals(numConta)).findFirst()
+        return contas.stream()
+                .filter(c -> c.getNumConta().equals(numConta))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Conta não encontrada."));
     }
+
+    public Cliente buscarClientePorCpf(String cpf) throws SQLException {
+        String sql = "SELECT * FROM cliente WHERE cpf = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, cpf);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Cliente cliente = new Cliente();
+                    cliente.setIdCliente(rs.getLong("id_cliente"));
+                    cliente.setNome(rs.getString("nome"));
+                    cliente.setCpf(rs.getString("cpf"));
+                    // Preencher outras propriedades de Cliente
+                    return cliente;
+                } else {
+                    return null;  // Retorna null se não encontrar o cliente
+                }
+            }
+        }
+    }
+
 
 }

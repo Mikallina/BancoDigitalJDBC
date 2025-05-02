@@ -32,4 +32,16 @@ public class ContaCorrenteDAO {
     }
 
 
+    public void atualizarConta(ContaCorrente contaCorrente) throws SQLException {
+        String sql = "UPDATE conta_corrente SET taxa_manutencao = ? WHERE id_conta = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, contaCorrente.getTaxaManutencao());
+            stmt.setLong(2, contaCorrente.getIdConta());
+
+            stmt.executeUpdate();
+        }
+
+    }
 }

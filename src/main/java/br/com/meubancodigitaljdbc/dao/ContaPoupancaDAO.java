@@ -32,4 +32,17 @@ public class ContaPoupancaDAO {
         return contaPoupanca;
     }
 
+    public void atualizarConta(ContaPoupanca conta) throws SQLException {
+        String sql = "UPDATE conta SET saldo = ? WHERE id_conta = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, conta.getSaldo());
+            stmt.setLong(2, conta.getIdConta());
+
+            stmt.executeUpdate();
+        }
+    }
+
 }
