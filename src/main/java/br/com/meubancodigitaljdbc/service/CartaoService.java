@@ -106,7 +106,7 @@ public class CartaoService {
 		if (cartao.getSenha() == senhaAntiga) {
 			cartao.setSenha(senhaNova);
 			System.out.println("Senha atualizada com sucesso.");
-			salvarCartao(cartao,false);
+			salvarCartao(cartao,true);
 			return true;
 		} else {
 			System.out.println("Senha antiga incorreta.");
@@ -321,7 +321,7 @@ public class CartaoService {
 
 	    // Salva alterações no cartão e conta
 	    salvarCartao(cartaoCredito, true);
-	    contaDAO.salvarConta(conta);
+	    //contaDAO.salvarConta(conta);
 
 	    return true;
 	}

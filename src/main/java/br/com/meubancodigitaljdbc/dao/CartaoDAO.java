@@ -178,12 +178,16 @@ public class CartaoDAO {
 
          if (cartao instanceof CartaoCredito credito) {
 
-             String sqlCredito = "UPDATE cartao_credito SET limite_credito = ? WHERE id_cartao = ?";
+             String sqlCredito = "UPDATE cartao_credito SET limite_credito = ?, data_compra = ?, pagamento = ? , saldo_mes = ? WHERE id_cartao = ?";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
 
                 stmt.setDouble(1, credito.getLimiteCredito());
-                stmt.setLong(2, credito.getIdCartao());
+                stmt.setDate(2, Date.valueOf(credito.getDataCompra()));
+                stmt.setDouble(3, credito.getPagamento());
+                stmt.setDouble(4, credito.getSaldoMes());
+                stmt.setLong(5, credito.getIdCartao());
+
 
                 stmt.executeUpdate();
             }
@@ -200,7 +204,7 @@ public class CartaoDAO {
             CartaoCredito credito = new CartaoCredito();
             credito.setLimiteCredito(rs.getDouble("limite_credito"));
             credito.setDiaVencimento(rs.getString("dia_vencimento"));
-            credito.getSaldoMes();
+            credito.setSaldoMes(rs.getDouble("saldo_mes"));
             //credito.setIdCartao(rs.getLong("id_cartao"));
             Date dataCompra = rs.getDate("data_compra");
             if (dataCompra != null) {
