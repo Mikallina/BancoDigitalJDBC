@@ -86,7 +86,7 @@ public class CartaoController {
 
 	@PutMapping("/alterar-status/{numCartao}")
 	public ResponseEntity<String> alterarStatusCartao(@PathVariable String numCartao,
-			@RequestBody AlterarStatusDTO dto) throws SQLException {
+			@RequestBody AlterarStatusDTO dto) throws Exception {
 		boolean alterado = cartaoService.alterarStatus(numCartao, dto.isStatus());
 
 		if (alterado) {

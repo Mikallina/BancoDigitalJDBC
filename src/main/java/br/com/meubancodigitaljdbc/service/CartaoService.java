@@ -43,7 +43,7 @@ public class CartaoService {
 		}
 		if (isAtualizar) {
 
-			cartaoDAO.save(cartao);
+			cartaoDAO.atualizar(cartao);
 			System.out.println("Cartão atualizado: " + cartao.getNumCartao());
 		} else {
 			cartaoDAO.save(cartao);
@@ -99,18 +99,18 @@ public class CartaoService {
 
 
 
-	public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao) throws SQLException {
+	public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao) throws Exception {
 		if (!cartao.isStatus()) {
 			throw new IllegalArgumentException("Status do Cartão Desativado");
 		}
 		if (cartao.getSenha() == senhaAntiga) {
 			cartao.setSenha(senhaNova);
 			System.out.println("Senha atualizada com sucesso.");
-			cartaoDAO.save(cartao);
+			salvarCartao(cartao,false);
 			return true;
 		} else {
 			System.out.println("Senha antiga incorreta.");
-			return false;
+			return true;
 		}
 	}
 
@@ -127,12 +127,12 @@ public class CartaoService {
 
 			if (cartao instanceof CartaoCredito cartaoCredito) {
 				cartaoCredito.alterarLimiteCredito(novoLimite);
-				cartaoDAO.save(cartaoCredito);
+				salvarCartao(cartao,true);
 				System.out.println("Limite de crédito atualizado para: R$ " + novoLimite);
 				return true;
 			} else if (cartao instanceof CartaoDebito cartaoDebito) {
 				cartaoDebito.alterarLimiteDebito(novoLimite);
-				cartaoDAO.save(cartaoDebito);
+				salvarCartao(cartao,true);
 				System.out.println("Limite de débito atualizado para: R$ " + novoLimite);
 				return true;
 			} else {
@@ -144,12 +144,12 @@ public class CartaoService {
 		return false;
 	}
 
-	public boolean alterarStatus(String numCartao, boolean novoStatus) throws SQLException {
+	public boolean alterarStatus(String numCartao, boolean novoStatus) throws Exception {
 		Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
 		if (cartaoOptional.isPresent()) {
 			Cartao cartao = cartaoOptional.get();
 			cartao.setStatus(novoStatus);
-			cartaoDAO.atualizar(cartao);
+			salvarCartao(cartao,true);
 			System.out.println("Status do cartão de número " + cartao.getNumCartao() + " alterado para " + novoStatus);
 			return true;
 		} else {
@@ -269,7 +269,7 @@ public class CartaoService {
 				cartaoCredito.setPagamento(cartaoCredito.getPagamento() + valor);
 
 				cartaoCredito.setDataCompra(dataCompra);
-				cartaoDAO.atualizar(cartao);
+				salvarCartao(cartao,true);
 
 				System.out.println("Pagamento realizado com sucesso.");
 				return true;

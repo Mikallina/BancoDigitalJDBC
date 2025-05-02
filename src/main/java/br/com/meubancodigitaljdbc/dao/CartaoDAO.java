@@ -61,11 +61,10 @@ public class CartaoDAO {
             }
         }
 
-        // Passo 2: Inserir dados específicos conforme o tipo
         if (cartao instanceof CartaoCredito) {
             CartaoCredito c = (CartaoCredito) cartao;
-            String sqlCredito = "INSERT INTO cartao_credito (data_vencimento, limite_credito, pagamento, saldo_mes, taxa, id_cartao, dia_vencimento) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sqlCredito = "INSERT INTO cartao_credito (data_compra, data_vencimento, limite_credito, pagamento, saldo_mes, taxa, id_cartao, dia_vencimento) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
@@ -162,18 +161,31 @@ public class CartaoDAO {
     }
 
     public void atualizar(Cartao cartao) throws SQLException {
-        String sql = "UPDATE cartao SET senha = ?, status = ?, fatura = ? WHERE num_cartao = ?";
+        String sqlCartao = "UPDATE cartao SET senha = ?, status = ?, fatura = ? WHERE num_cartao = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sqlCartao)) {
 
             stmt.setInt(1, cartao.getSenha());
             stmt.setBoolean(2, cartao.isStatus());
-           // stmt.setDouble(3,cartao.);
             stmt.setDouble(3, cartao.getFatura());
             stmt.setString(4, cartao.getNumCartao());
 
             stmt.executeUpdate();
+        }
+
+         if (cartao instanceof CartaoCredito) {
+            CartaoCredito credito = (CartaoCredito) cartao;
+
+            String sqlCredito = "UPDATE cartao_credito SET limite_credito = ? WHERE id_cartao = ?";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
+
+                stmt.setDouble(1, credito.getLimiteCredito());
+                stmt.setLong(2, credito.getIdCartao());
+
+                stmt.executeUpdate();
+            }
         }
     }
 
