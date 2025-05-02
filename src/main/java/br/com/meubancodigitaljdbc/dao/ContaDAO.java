@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.dao;
 
+import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
@@ -61,18 +62,62 @@ public class ContaDAO {
     // Método para buscar conta por número
     public Conta buscarPorNumero(String numeroConta) throws SQLException {
         String sql = "SELECT * FROM conta WHERE num_conta = ?";
+
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, numeroConta);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                Conta conta = mapearConta(rs);
+                Conta conta = mapResultSetToConta(rs);
                 System.out.println("→ Conta encontrada: " + conta.getNumConta() + " | Saldo do banco: " + conta.getSaldo());
-                return mapearConta(rs);
+                return conta;
             }
         }
         return null;
+    }
+
+
+    public Optional<Conta> findById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID da conta não pode ser null");
+        }
+
+        String sql = "SELECT * FROM conta WHERE id_conta = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return Optional.of(mapResultSetToConta(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
+
+    private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
+
+        Conta conta = new ContaCorrente();
+        conta.setTipoConta(TipoConta.valueOf(rs.getString("tipo_conta")));
+        conta.setIdConta(rs.getLong("id_conta"));
+        conta.setAgencia(rs.getInt("agencia"));
+        conta.setNumConta(rs.getString("num_conta"));
+        conta.setSaldo(rs.getDouble("saldo"));
+
+        Cliente cliente = new Cliente();
+        cliente.setIdCliente(rs.getLong("cliente_id"));
+        //cliente.setCategoria(Categoria.valueOf(rs.getString("categoria")));
+        conta.setCliente(cliente);
+
+        return conta;
     }
 
     // Método para buscar contas por cliente_id
@@ -86,11 +131,12 @@ public class ContaDAO {
 
             while (rs.next()) {
                 contas.add(mapearConta(rs));
-                System.out.println(contas);
+
             }
         }
         return contas;
     }
+
 
     // Método para atualizar o saldo da conta
     public void atualizarSaldo(Long idConta, double novoSaldo) throws SQLException {
@@ -109,8 +155,8 @@ public class ContaDAO {
     private Conta mapearConta(ResultSet rs) throws SQLException {
         TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
         long clienteId = rs.getLong("cliente_id");
-
         Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
+
         if (optionalCliente.isEmpty()) {
             throw new RuntimeException("Cliente não encontrado com ID: " + clienteId);
         }
@@ -118,17 +164,23 @@ public class ContaDAO {
         Cliente cliente = optionalCliente.get();
         Conta conta;
 
+        // A lógica de mapeamento de tipo de conta (Corrente ou Poupança)
         if (tipo == TipoConta.CORRENTE) {
             conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
-        } else {
+        } else if (tipo == TipoConta.POUPANCA) {
             conta = new ContaPoupanca(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
+        } else {
+            throw new RuntimeException("Tipo de conta desconhecido: " + tipo);
         }
 
         conta.setIdConta(rs.getLong("id_conta"));
         double saldo = rs.getDouble("saldo");
         conta.setSaldo(saldo);
+
+        // Retorna a conta com o cliente corretamente associado
         return conta;
     }
+
 
     // Método para buscar todas as contas
     public List<Conta> findAll() {

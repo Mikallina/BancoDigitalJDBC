@@ -1,7 +1,9 @@
 package br.com.meubancodigitaljdbc.service;
 
 import br.com.meubancodigitaljdbc.dao.ClienteDAO;
+import br.com.meubancodigitaljdbc.dao.ContaCorrenteDAO;
 import br.com.meubancodigitaljdbc.dao.ContaDAO;
+import br.com.meubancodigitaljdbc.dao.ContaPoupancaDAO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
@@ -10,6 +12,7 @@ import br.com.meubancodigitaljdbc.model.ContaPoupanca;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -22,6 +25,9 @@ public class ContaService {
 
     @Autowired
     private ClienteDAO clienteDAO;
+
+    @Autowired
+    private DataSource dataSource;
     double taxaRendimento = 0;
 
     public void salvarConta(Cliente cliente, Conta conta, TipoConta tipoConta) throws SQLException {
@@ -99,9 +105,12 @@ public class ContaService {
         return contaDAO.salvarConta(conta);
     }
 
-    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException {
-        Conta conta = (Conta) contaDAO.buscarPorClienteId(idConta);
+    public boolean aplicarTaxaOuRendimento(String cpf, String numConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException {
+        Conta conta = buscarContaPorClienteEConta(cpf, numConta);
 
+        if (conta == null) {
+            throw new IllegalArgumentException("Conta não encontrada.");
+        }
         double valorAplicado;
 
         if (aplicarTaxa) {
@@ -114,7 +123,11 @@ public class ContaService {
             valorAplicado = taxaManutencaoCC(cliente, tipoConta, contaCorrente);
             contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
 
+            // Usar o DAO específico para ContaCorrente
+            ContaCorrenteDAO contaCorrenteDAO = new ContaCorrenteDAO(dataSource);
+            contaCorrenteDAO.salvarConta(contaCorrente);  // Salva a conta corrente no banco de dados
         } else {
+            // Filtra conta poupança
             if (!(conta instanceof ContaPoupanca)) {
                 throw new IllegalArgumentException("Este endpoint é apenas para contas poupanças");
             }
@@ -123,11 +136,17 @@ public class ContaService {
             Cliente cliente = contaPoupanca.getCliente();
             valorAplicado = taxaManutencaoCP(cliente, tipoConta, contaPoupanca);
             contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);
+
+            ContaPoupancaDAO contaPoupancaDAO = new ContaPoupancaDAO(dataSource);
+            contaPoupancaDAO.salvarConta(contaPoupanca);
         }
 
         contaDAO.salvarConta(conta);
+
         return true;
     }
+
+
 
     public double taxaManutencaoCC(Cliente cliente, TipoConta tipoConta, ContaCorrente contaC) {
         double taxaManutencao = 0;

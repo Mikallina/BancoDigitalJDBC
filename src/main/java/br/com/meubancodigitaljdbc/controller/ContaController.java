@@ -14,7 +14,6 @@ import br.com.meubancodigitaljdbc.service.ContaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/conta")
-@CrossOrigin(origins = "http://localhost:5500")
 public class ContaController {
 
 	@Autowired
@@ -106,32 +104,45 @@ public class ContaController {
 		}
 	}
 
-	@PutMapping("/{idConta}/manutencao")
-	public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta) {
+	@PutMapping("/{cpf}/{numConta}/manutencao")
+	public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable String cpf,
+														@PathVariable String numConta,
+														@RequestParam TipoConta tipoConta) {
 
 		try {
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
+			// Chama o service para aplicar a taxa ou rendimento com base no CPF e número da conta
+			boolean sucesso = contaService.aplicarTaxaOuRendimento(cpf, numConta, tipoConta, true);
+
 			if (sucesso) {
 				return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
 			}
+
 		} catch (IllegalArgumentException | SQLException e) {
+			// Se houver exceções, retorna o erro
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
-
 	}
 
-	@PutMapping("/{idConta}/rendimentos")
-	public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta) {
+
+	@PutMapping("/{cpf}/{numConta}/rendimentos")
+	public ResponseEntity<String> aplicarRendimentos(@PathVariable String cpf,
+													 @PathVariable String numConta,
+													 @RequestParam TipoConta tipoConta) {
+
 		try {
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, false);
+			// Chama o service para aplicar o rendimento com base no CPF e número da conta
+			boolean sucesso = contaService.aplicarTaxaOuRendimento(cpf, numConta, tipoConta, false);
+
 			if (sucesso) {
 				return ResponseEntity.ok("Rendimento aplicado com sucesso");
 			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar o rendimento");
 			}
+
 		} catch (IllegalArgumentException | SQLException e) {
+			// Se houver exceções, retorna o erro
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
