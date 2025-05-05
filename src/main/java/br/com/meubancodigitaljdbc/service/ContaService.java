@@ -5,6 +5,9 @@ import br.com.meubancodigitaljdbc.dao.ContaCorrenteDAO;
 import br.com.meubancodigitaljdbc.dao.ContaDAO;
 import br.com.meubancodigitaljdbc.dao.ContaPoupancaDAO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.execptions.ContaNaoEncontradaException;
+import br.com.meubancodigitaljdbc.execptions.ContaNaoValidaException;
+import br.com.meubancodigitaljdbc.execptions.OperacoesExceptions;
 import br.com.meubancodigitaljdbc.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,27 +23,31 @@ import java.util.List;
 @Service
 public class ContaService {
 
-    @Autowired
-    private ContaDAO contaDAO;
+    private final ContaDAO contaDAO;
+    private final ClienteDAO clienteDAO;
+    private final DataSource dataSource;
 
     @Autowired
-    private ClienteDAO clienteDAO;
-
-    @Autowired
-    private DataSource dataSource;
+    public ContaService(ContaDAO contaDAO, ClienteDAO clienteDAO, DataSource dataSource) {
+        this.contaDAO = contaDAO;
+        this.clienteDAO = clienteDAO;
+        this.dataSource = dataSource;
+    }
     double taxaRendimento = 0;
 
-    public void salvarConta(Conta conta, boolean isAtualizar) throws Exception {
+    public void salvarConta(Conta conta, boolean isAtualizar) throws ContaNaoValidaException {
         if (conta == null || conta.getNumConta() == null) {
-            throw new IllegalArgumentException("Erro: Tentativa de Salvar o Cartão nulo");
+            throw new ContaNaoValidaException("Erro: Conta ou número da conta não pode ser nulo.");
         }
-        if (isAtualizar) {
 
-            contaDAO.atualizarConta(conta);
-            System.out.println("Cartão atualizado: ");
-        } else {
-            contaDAO.salvarConta(conta);
-            System.out.println("Novo cartão adicionado: ");
+        try {
+            if (isAtualizar) {
+                contaDAO.atualizarConta(conta);
+            } else {
+                contaDAO.salvarConta(conta);
+            }
+        } catch (SQLException e) {
+            throw new ContaNaoValidaException("Erro ao salvar ou atualizar a conta: " + e.getMessage(), e);
         }
     }
 
@@ -48,17 +55,6 @@ public class ContaService {
         return contaDAO.buscarPorClienteId(cliente.getIdCliente());
     }
 
-    public void listarContas() {
-        List<Conta> contas = contaDAO.findAll();
-
-        if (contas.isEmpty()) {
-            System.out.println("Nenhuma conta cadastrada");
-        } else {
-            for (Conta conta : contas) {
-                System.out.println("Conta: " + conta.getNumConta());
-            }
-        }
-    }
 
     public String gerarNumeroConta(int agencia, TipoConta tipoConta) {
         StringBuilder conta = new StringBuilder();
@@ -83,7 +79,7 @@ public class ContaService {
         return String.format("%s-%04d-%s", tipoContaString, agencia, conta.toString());
     }
 
-    public Conta criarConta(Cliente cliente, int agencia, TipoConta tipoConta) throws SQLException {
+    public Conta criarConta(Cliente cliente, int agencia, TipoConta tipoConta) throws SQLException, ContaNaoEncontradaException {
         String numConta = gerarNumeroConta(agencia, tipoConta);
         Conta conta;
 
@@ -98,22 +94,25 @@ public class ContaService {
         return contaDAO.salvarConta(conta);
     }
 
-    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws Exception {
-
-        Conta conta = buscarContaPorId(idConta);
+    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws ContaNaoEncontradaException, SQLException {
+        Conta conta;
+        try {
+            conta = buscarContaPorId(idConta);
+        } catch (SQLException e) {
+            throw new ContaNaoEncontradaException("Erro ao buscar conta", e);
+        }
 
         if (conta == null) {
-            throw new IllegalArgumentException("Conta não encontrada.");
+            throw new ContaNaoEncontradaException("Conta não encontrada.");
         }
 
         double valorAplicado;
 
         // Verificação para aplicar a taxa de manutenção
         if (aplicarTaxa) {
-            if (tipoConta == TipoConta.CORRENTE && conta instanceof ContaCorrente) {
-                ContaCorrente contaCorrente = (ContaCorrente) conta;
+            if (tipoConta == TipoConta.CORRENTE && conta instanceof ContaCorrente contaCorrente) {
                 Cliente cliente = contaCorrente.getCliente();
-                valorAplicado = taxaManutencaoCC(cliente, tipoConta, contaCorrente);
+                valorAplicado = taxaManutencaoCC(cliente, contaCorrente);
                 contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
                 ContaCorrenteDAO contaCorrenteDAO = new ContaCorrenteDAO(dataSource);
                 contaCorrenteDAO.atualizarConta(contaCorrente);
@@ -121,10 +120,9 @@ public class ContaService {
                 throw new IllegalArgumentException("Este endpoint é apenas para contas correntes");
             }
         } else {
-            if (tipoConta == TipoConta.POUPANCA && conta instanceof ContaPoupanca) {
-                ContaPoupanca contaPoupanca = (ContaPoupanca) conta;
+            if (tipoConta == TipoConta.POUPANCA && conta instanceof ContaPoupanca contaPoupanca) {
                 Cliente cliente = contaPoupanca.getCliente();
-                valorAplicado = taxaManutencaoCP(cliente, tipoConta, contaPoupanca);  // Calcula o rendimento
+                valorAplicado = taxaManutencaoCP(cliente, contaPoupanca);  // Calcula o rendimento
                 contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);  // Atualiza o saldo
                 ContaPoupancaDAO contaPoupancaDAO = new ContaPoupancaDAO(dataSource);
                 contaPoupancaDAO.atualizarConta(contaPoupanca);  // Atualiza a conta poupança no banco
@@ -134,7 +132,12 @@ public class ContaService {
         }
 
         // No final, salvamos a conta no banco de dados, para garantir que as mudanças sejam persistidas
-        salvarConta(conta, true);
+        try {
+            salvarConta(conta, true);
+        } catch (ContaNaoValidaException e) {
+            throw new RuntimeException("Erro ao salvar conta", e);
+        }
+
         return true;
     }
 
@@ -148,8 +151,7 @@ public class ContaService {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    Conta conta = mapearConta(rs);
-                    return conta;
+                    return mapearConta(rs);
                 } else {
                     return null;
                 }
@@ -200,7 +202,7 @@ public class ContaService {
 
 
 
-    public double taxaManutencaoCC(Cliente cliente, TipoConta tipoConta, ContaCorrente contaC) {
+    public double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC) {
         double taxaManutencao = 0;
 
         if (cliente.getCategoria().getDescricao().equals("Comum")) {
@@ -223,7 +225,7 @@ public class ContaService {
         return taxaManutencao;
     }
 
-    public double taxaManutencaoCP(Cliente cliente, TipoConta tipoConta, ContaPoupanca contaP) {
+    public double taxaManutencaoCP(Cliente cliente, ContaPoupanca contaP) {
         double saldoAtual = contaP.getSaldo();
 
         if (cliente.getCategoria().getDescricao().equals("Comum")) {
@@ -244,10 +246,6 @@ public class ContaService {
 
         contaP.setTaxaRendimento(taxaRendimento);
 
-        System.out.println("Saldo atual: " + saldoAtual);
-        System.out.println("Taxa mensal: " + taxaMensal);
-        System.out.println("Rendimento mensal: " + rendimentoMensal);
-
         return rendimentoMensal;
     }
 
@@ -266,22 +264,15 @@ public class ContaService {
         return realizarTransferencia(valor, numContaOrigem, numContaDestino, false, false, true);
     }
 
-    public double obterSaldo(String cpf) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public boolean realizarDeposito(String numContaDestino, double valor) throws Exception {
+    public boolean realizarDeposito(String numContaDestino, double valor) throws OperacoesExceptions, SQLException, ContaNaoValidaException {
         if (valor <= 0) {
-            throw new IllegalArgumentException("Valor do depósito não pode ser zero");
+            throw new OperacoesExceptions("Valor do depósito não pode ser zero");
         }
-
         Conta conta = contaDAO.buscarPorNumero(numContaDestino);
-        System.out.println("Número da conta recebido no backend: " + numContaDestino);
-        if (conta == null) {
-            throw new RuntimeException("Conta Não encontrada");
-        }
 
+        if (conta == null) {
+            throw new OperacoesExceptions("Conta Não encontrada");
+        }
         double novoSaldo = conta.getSaldo() + valor;
         conta.setSaldo(novoSaldo);
         salvarConta(conta, true);
@@ -294,9 +285,6 @@ public class ContaService {
 
         Conta contaOrigem = contaDAO.buscarPorNumero(numContaOrigem);
         Conta contaDestino = contaDAO.buscarPorNumero(numContaDestino);
-        System.out.println("Saldo atual da conta origem: " + contaOrigem.getSaldo() + numContaOrigem);
-        System.out.println("Valor a transferir: " + valor);
-
 
         if (contaOrigem == null) {
             throw new IllegalArgumentException("Conta de origem não encontrada.");

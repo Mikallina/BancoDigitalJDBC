@@ -7,6 +7,8 @@ import br.com.meubancodigitaljdbc.dto.ContaResponseDTO;
 import br.com.meubancodigitaljdbc.dto.DepositoDTO;
 import br.com.meubancodigitaljdbc.dto.TransferenciaDTO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.execptions.ContaNaoEncontradaException;
+import br.com.meubancodigitaljdbc.execptions.OperacoesExceptions;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.service.ClienteService;
@@ -36,7 +38,7 @@ public class ContaController {
 
 	@PostMapping("/criarConta")
 	public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
-											@RequestParam TipoConta tipoConta) throws SQLException {
+											@RequestParam TipoConta tipoConta) throws SQLException, ContaNaoEncontradaException {
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			Conta conta = contaService.criarConta(cliente, agencia, tipoConta);
@@ -58,7 +60,7 @@ public class ContaController {
 	}
 
 	@PostMapping("/depositar")
-	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception {
+	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception, OperacoesExceptions {
 		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
 		if (sucesso) {
 			return ResponseEntity.ok("Depósito realizado com sucesso!");
@@ -132,8 +134,6 @@ public class ContaController {
 			}
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

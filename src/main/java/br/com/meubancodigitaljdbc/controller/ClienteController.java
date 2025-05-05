@@ -55,7 +55,6 @@ public class ClienteController {
 
 	@GetMapping("/buscarCpf/{cpf}")
 	public ResponseEntity<Cliente> buscarClientePorCpf(@PathVariable String cpf) {
-		System.out.println("Procurando cliente com CPF: " + cpf);
 		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 		if (cliente != null) {
 			return ResponseEntity.ok(cliente);

@@ -17,20 +17,6 @@ public class ContaCorrenteDAO {
         this.dataSource = dataSource;
     }
 
-    public ContaCorrente salvarConta(ContaCorrente contaCorrente) throws SQLException {
-        String sql = "INSERT INTO conta_corrente (taxa_manutencao, id_conta) VALUES(?,?)";
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setDouble(1, contaCorrente.getTaxaManutencao());
-            stmt.setLong(2, contaCorrente.getIdConta());
-
-            stmt.executeUpdate();
-
-        }
-        return contaCorrente;
-    }
-
 
     public void atualizarConta(ContaCorrente contaCorrente) throws SQLException {
         String sql = "UPDATE conta_corrente SET taxa_manutencao = ? WHERE id_conta = ?";

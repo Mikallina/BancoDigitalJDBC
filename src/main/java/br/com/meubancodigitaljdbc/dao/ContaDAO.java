@@ -256,42 +256,4 @@ public class ContaDAO {
     }
 
 
-    public Optional<Object> buscarPorIdConta(Long idConta) throws SQLException {
-        String sql = "SELECT * FROM conta WHERE id_conta = ?";  // Ajuste conforme sua tabela e banco de dados
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, idConta);  // Define o valor do parâmetro na consulta
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    // Aqui você verifica o tipo de conta (Conta Corrente, Poupança, etc.)
-                    String tipoConta = rs.getString("tipo_conta");  // Ajuste conforme seu banco
-
-                    // Criação do objeto Conta, ou suas subclasses (ContaCorrente, ContaPoupanca)
-                    Conta conta = null;
-                    if ("Corrente".equals(tipoConta)) {
-                        conta = new ContaCorrente();
-                    } else if ("Poupanca".equals(tipoConta)) {
-                        conta = new ContaPoupanca();
-                    }
-
-                    // Preenche os dados da conta
-                    if (conta != null) {
-                        conta.setIdConta(rs.getLong("id_conta"));
-                        conta.setNumConta(rs.getString("num_conta"));
-                        conta.setSaldo(rs.getDouble("saldo"));
-                        // Preencher outros campos necessários
-                    }
-
-                    // Retorna a conta dentro de um Optional
-                    return Optional.ofNullable(conta);
-                } else {
-                    // Se não encontrar a conta, retorna um Optional vazio
-                    return Optional.empty();
-                }
-            }
-        }
-    }
 }

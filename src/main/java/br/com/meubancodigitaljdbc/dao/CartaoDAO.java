@@ -1,6 +1,6 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.enuns.TipoCartao;
+import br.com.meubancodigitaljdbc.mapper.CartaoRowMapper;
 import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
@@ -28,7 +28,6 @@ public class CartaoDAO {
     private ContaDAO contaDAO;
 
 
-
     public Cartao save(Cartao cartao) throws SQLException {
         if (cartao.getConta() == null || cartao.getConta().getIdConta() == null) {
             throw new IllegalArgumentException("Cartão não possui uma conta válida associada.");
@@ -39,7 +38,6 @@ public class CartaoDAO {
             throw new IllegalArgumentException("Conta com ID " + cartao.getConta().getIdConta() + " não encontrada.");
         }
 
-        // Passo 1: Inserir na tabela cartao
         String sqlCartao = "INSERT INTO cartao (tipo_cartao, num_cartao, senha, status, id_conta, fatura) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
@@ -113,9 +111,6 @@ public class CartaoDAO {
     }
 
 
-
-
-
     public List<Cartao> buscarPorConta(Conta conta) throws SQLException {
         List<Cartao> cartoes = new ArrayList<>();
         String sql = "SELECT c.*, cc.data_compra, cc.data_vencimento, cc.limite_credito, cc.pagamento, cc.saldo_mes, cc.taxa AS credito_taxa, cc.dia_vencimento, " +
@@ -131,8 +126,10 @@ public class CartaoDAO {
             stmt.setLong(1, conta.getIdConta());
             ResultSet rs = stmt.executeQuery();
 
+            CartaoRowMapper rowMapper = new CartaoRowMapper(conta);
+            int rowNum = 0;
             while (rs.next()) {
-                cartoes.add(mapResultSetToCartao(rs, conta));
+                cartoes.add(rowMapper.mapRow(rs, rowNum++));
             }
         }
 
@@ -155,7 +152,7 @@ public class CartaoDAO {
             if (rs.next()) {
                 long idConta = rs.getLong("id_conta");
                 Conta conta = contaDAO.findById(idConta).orElse(null);
-                return mapResultSetToCartao(rs, conta);
+                return CartaoRowMapper.map(rs, conta);
             }
         }
 
@@ -176,9 +173,9 @@ public class CartaoDAO {
             stmt.executeUpdate();
         }
 
-         if (cartao instanceof CartaoCredito credito) {
+        if (cartao instanceof CartaoCredito credito) {
 
-             String sqlCredito = "UPDATE cartao_credito SET limite_credito = ?, data_compra = ?, pagamento = ? , saldo_mes = ? WHERE id_cartao = ?";
+            String sqlCredito = "UPDATE cartao_credito SET limite_credito = ?, data_compra = ?, pagamento = ? , saldo_mes = ? WHERE id_cartao = ?";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
 
@@ -194,59 +191,6 @@ public class CartaoDAO {
         }
     }
 
-    private Cartao mapResultSetToCartao(ResultSet rs, Conta conta) throws SQLException {
-        // Verifique se o tipo de cartão existe
-        TipoCartao tipoCartao = TipoCartao.valueOf(rs.getString("tipo_cartao"));
-        Cartao cartao;
-
-        // Verifique o tipo de cartão e crie a instância correspondente
-        if (tipoCartao == TipoCartao.CREDITO) {
-            CartaoCredito credito = new CartaoCredito();
-            credito.setLimiteCredito(rs.getDouble("limite_credito"));
-            credito.setDiaVencimento(rs.getString("dia_vencimento"));
-            credito.setSaldoMes(rs.getDouble("saldo_mes"));
-            //credito.setIdCartao(rs.getLong("id_cartao"));
-            Date dataCompra = rs.getDate("data_compra");
-            if (dataCompra != null) {
-                credito.setDataCompra(dataCompra.toLocalDate());
-            }
-
-            // Verifique se a data de vencimento não é null
-            Date dataVencimento = rs.getDate("data_vencimento");
-            if (dataVencimento != null) {
-                credito.setDataVencimento(dataVencimento.toLocalDate());
-            }
-            credito.setPagamento(rs.getDouble("pagamento"));
-            credito.setTaxa(rs.getDouble("credito_taxa"));
-            cartao = credito;
-        } else if (tipoCartao == TipoCartao.DEBITO) {
-            CartaoDebito debito = new CartaoDebito();
-            debito.setLimiteDiario(rs.getDouble("limite_diario"));
-            debito.setIdCartao(rs.getLong("id_cartao"));
-            debito.setTaxa(rs.getDouble("debito_taxa"));
-            debito.setTotalPgtoHoje(rs.getDouble("total_pgto_hoje"));
-            cartao = debito;
-        } else {
-            throw new IllegalArgumentException("Tipo de cartão desconhecido: " + tipoCartao);
-        }
-
-        // Preencha os campos comuns aos dois tipos de cartão
-        cartao.setTipoCartao(TipoCartao.valueOf(rs.getString("tipo_cartao")));
-        cartao.setIdCartao(rs.getLong("id_cartao"));
-        cartao.setNumCartao(rs.getString("num_cartao"));
-        cartao.setSenha(rs.getInt("senha"));
-        cartao.setFatura(rs.getDouble("fatura"));
-        cartao.setStatus(rs.getBoolean("status"));
-        cartao.setTipoCartao(tipoCartao);
-
-
-        if (conta == null) {
-            throw new IllegalArgumentException("Conta não encontrada para associar ao cartão.");
-        }
-        cartao.setConta(conta);
-
-        return cartao;
-    }
 
 }
 

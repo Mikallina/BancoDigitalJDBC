@@ -130,7 +130,6 @@ public class CartaoController {
 
 		String numCartao = compraCartaoDTO.getNumCartao();
 		Cartao cartao = cartaoService.buscarCartaoPorNumero(numCartao);
-		System.out.println(numCartao);
 		if (cartao == null) {
 			return ResponseEntity.notFound().build();
 		}

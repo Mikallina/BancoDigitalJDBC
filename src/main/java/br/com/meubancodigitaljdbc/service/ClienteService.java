@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.service;
 
 import br.com.meubancodigitaljdbc.dao.ClienteDAO;
+import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Endereco;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,23 +37,23 @@ public class ClienteService {
     public void deletarCliente(Long clienteId) {
         Optional<Cliente> clienteExistente = clienteDAO.findById(clienteId);
         if (clienteExistente.isPresent()) {
-            clienteDAO.deleteById(clienteId); // Deleta o cliente com o ID fornecido
+            clienteDAO.deleteById(clienteId);
         }
 
     }
 
-    private void validarCliente(Cliente cliente, boolean isAtualizar) throws Exception {
+    private void validarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException {
         if (!validarCpf(cliente.getCpf(), isAtualizar, cliente.getIdCliente())) {
-            throw new Exception("CPF inválido ou já cadastrado.");
+            throw new ClienteInvalidoException("CPF inválido ou já cadastrado.");
         }
         if (!validarNome(cliente.getNome())) {
-            throw new Exception("Nome inválido.");
+            throw new ClienteInvalidoException("Nome inválido.");
         }
         if (!validarEndereco(cliente.getEndereco())) {
-            throw new Exception("Endereço inválido.");
+            throw new ClienteInvalidoException("Endereço inválido.");
         }
         if (!validarDataNascimento(cliente.getDataNascimento())) {
-            throw new Exception("Data de nascimento inválida.");
+            throw new ClienteInvalidoException("Data de nascimento inválida.");
         }
 
     }
@@ -80,11 +81,11 @@ public class ClienteService {
 
     public boolean validarNome(String nome) {
         if (nome.length() < 2 || nome.length() > 100) {
-            System.out.println("O nome deve ter entre 2 e 100 caracteres.");
+
             return false;
         }
         if (!nome.matches("[a-zA-Z ]+")) {
-            System.out.println("O nome deve conter apenas letras e espaços");
+
             return false;
         }
         return true;
@@ -108,18 +109,18 @@ public class ClienteService {
     public boolean validarDataNascimento(LocalDate dataNascimento) {
         try {
             if (dataNascimento.isAfter(LocalDate.now())) {
-                System.out.println("Data de nascimento inválida, não pode ser no futuro");
+
                 return false;
             }
             int idade = calcularIdade(dataNascimento);
             if (idade < 18) {
-                System.out.println("Cliente deve ter ao menos 18 anos");
+
                 return false;
             }
             return true;
 
         } catch (Exception e) {
-            System.out.println("Data de Nascimento inválida. O formato deve ser dd/MM/yyyy");
+
             return false;
         }
     }

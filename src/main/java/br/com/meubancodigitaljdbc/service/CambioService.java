@@ -26,8 +26,6 @@ public class CambioService {
         try {
 
         	String url = String.format("%s/%s/latest/%s", apiUrl, apiKey, moedaBase);
-        
-        	System.out.println("URL gerada: " + url);
 
             // Requisição para obter a resposta da API
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
@@ -53,7 +51,6 @@ public class CambioService {
             return cotacao;
 
         } catch (Exception e) {
-            System.out.println("Erro ao buscar cotação: " + e.getMessage());
             throw new Exception("Erro ao buscar cotação: " + e.getMessage());
         }
     }
@@ -77,8 +74,6 @@ public class CambioService {
             Map<String, Object> responseBody = response.getBody();
 
             if (responseBody == null || !responseBody.containsKey("conversion_rates")) {
-                // Debug: Imprimir a resposta da API
-                System.out.println("Resposta da API: " + responseBody);
                 throw new Exception("A resposta da API não contém a chave 'conversion_rates'.");
             }
 
@@ -88,8 +83,6 @@ public class CambioService {
             return conversionRates;
 
         } catch (Exception e) {
-            // Log de erro
-            System.out.println("Erro ao obter as moedas disponíveis: " + e.getMessage());
             throw new Exception("Erro ao buscar as moedas: " + e.getMessage());
         }
     }
