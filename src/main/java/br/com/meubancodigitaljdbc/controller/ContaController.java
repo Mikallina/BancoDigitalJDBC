@@ -1,8 +1,5 @@
 package br.com.meubancodigitaljdbc.controller;
 
-import java.sql.SQLException;
-import java.util.List;
-
 import br.com.meubancodigitaljdbc.dto.ContaResponseDTO;
 import br.com.meubancodigitaljdbc.dto.DepositoDTO;
 import br.com.meubancodigitaljdbc.dto.TransferenciaDTO;
@@ -13,146 +10,117 @@ import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.service.ClienteService;
 import br.com.meubancodigitaljdbc.service.ContaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.sql.SQLException;
+import java.util.List;
 
 
 @RestController
 @RequestMapping("/conta")
 public class ContaController {
 
-	@Autowired
-	private ContaService contaService;
 
-	@Autowired
-	private ClienteService clienteService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContaController.class);
+    @Autowired
+    private ContaService contaService;
 
-	@PostMapping("/criarConta")
-	public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
-											@RequestParam TipoConta tipoConta) throws SQLException, ContaNaoEncontradaException {
-		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
-		if (cliente != null) {
-			Conta conta = contaService.criarConta(cliente, agencia, tipoConta);
-			return ResponseEntity.ok(conta);
-		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-		}
-	}
+    @Autowired
+    private ClienteService clienteService;
 
-	@GetMapping("/buscarConta/{cpf}")
-	public ResponseEntity<Cliente> buscarClienteComContas(@PathVariable String cpf) throws SQLException {
-		Cliente cliente = clienteService.buscarClientePorCpf(cpf);
-		if (cliente != null) {
-			List<Conta> contas = contaService.buscarContasPorCliente(cliente);
-			cliente.setContas(contas);
-			return ResponseEntity.ok(cliente); // Retorna o cliente com as contas
-		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-	}
+    @PostMapping("/criarConta")
+    public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
+                                            @RequestParam TipoConta tipoConta)
+            throws SQLException, ContaNaoEncontradaException {
 
-	@PostMapping("/depositar")
-	public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception, OperacoesExceptions {
-		boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
-		if (sucesso) {
-			return ResponseEntity.ok("Depósito realizado com sucesso!");
-		} else {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao realizar depósito.");
-		}
-	}
+        Cliente cliente = clienteService.buscarClientePorCpf(cpf);
+        Conta conta = contaService.criarConta(cliente, agencia, tipoConta);
 
-	@PostMapping("/efetuarPIX")
-	public ResponseEntity<String> efetuarPIX(@RequestBody TransferenciaDTO transferenciaDTO) {
-		try {
-			boolean sucesso = contaService.realizarTransferenciaPIX(transferenciaDTO.getValor(),
-					transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getChave());
-			if (sucesso) {
-				return ResponseEntity.ok("PIX realizado com sucesso!");
-			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao realizar PIX.");
-			}
-		} catch (IllegalArgumentException | SQLException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
+        LOGGER.info("Conta criada com sucesso para CPF {}", cpf);
 
-	@PostMapping("/transferirPoupanca")
-	public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
-		boolean sucesso = contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
-				transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getNumContaDestino());
-		if (sucesso) {
-			return ResponseEntity.ok("Transferência para conta poupança realizada com sucesso!");
-		} else {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao transferir para conta poupança.");
-		}
-	}
-
-	@PostMapping("/transferirOutrasContas")
-	public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
-		boolean sucesso = contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
-				transferenciaDTO.getNumContaDestino(), transferenciaDTO.getNumContaOrigem());
-		if (sucesso) {
-			return ResponseEntity.ok("Transferência realizada com sucesso!");
-		} else {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao transferir para outra conta.");
-		}
-	}
-
-	@PutMapping("/{idConta}/manutencao")
-	public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta) {
-
-		try {
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
-			if (sucesso) {
-				return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
-			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
-			}
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-
-	}
+        return ResponseEntity.ok(conta);
+    }
 
 
-	@PutMapping("/{idConta}/rendimentos")
-	public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta) {
-		try {
-			boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
-			if (sucesso) {
-				return ResponseEntity.ok("Rendimento aplicado com sucesso");
-			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao aplicar a taxa");
-			}
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @GetMapping("/buscarConta/{cpf}")
+    public ResponseEntity<Cliente> buscarClienteComContas(@PathVariable String cpf) throws SQLException {
+        Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 
-	@GetMapping("/exibirSaldoDetalhado")
-	public ResponseEntity<?> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta) {
-		try {
-			Conta conta = contaService.buscarContaPorClienteEConta(cpf, numConta);
+        List<Conta> contas = contaService.buscarContasPorCliente(cliente);
+        cliente.setContas(contas);
+        LOGGER.info("Cliente encontrado...", cpf);
 
-			// Retorna os dados da conta em um DTO
-			ContaResponseDTO contaResponseDTO = new ContaResponseDTO(conta.getCliente().getNome(),
-					conta.getCliente().getCpf(), conta);
+        return ResponseEntity.ok(cliente);
 
-			return ResponseEntity.ok(contaResponseDTO);
 
-		} catch (IllegalArgumentException | SQLException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-		}
-	}
+    }
+
+    @PostMapping("/depositar")
+    public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception, OperacoesExceptions {
+        boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
+        LOGGER.info("Depósito realizado na conta {} no valor de R${}", depositoDTO.getNumContaDestino(), depositoDTO.getValor());
+        return ResponseEntity.ok("Depósito realizado com sucesso.");
+    }
+
+    @PostMapping("/efetuarPIX")
+    public ResponseEntity<String> efetuarPIX(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+
+        boolean sucesso = contaService.realizarTransferenciaPIX(transferenciaDTO.getValor(),
+                transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getChave());
+        LOGGER.info("PIX realizado com sucesso");
+        return null;
+    }
+
+    @PostMapping("/transferirPoupanca")
+    public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+        boolean sucesso = contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
+                transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getNumContaDestino());
+        LOGGER.info("Transferencia realizada com sucesso.");
+        return ResponseEntity.ok("Transferência para conta poupança realizada com sucesso!");
+
+    }
+
+    @PostMapping("/transferirOutrasContas")
+    public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+        boolean sucesso = contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
+                transferenciaDTO.getNumContaDestino(), transferenciaDTO.getNumContaOrigem());
+        LOGGER.info("Transferencia realizada com sucesso.");
+        return ResponseEntity.ok("Transferência realizada com sucesso!");
+
+    }
+
+    @PutMapping("/{idConta}/manutencao")
+    public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta) throws ContaNaoEncontradaException, SQLException {
+
+        boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
+        LOGGER.info("Taxa de Manutenção Aplicada");
+        return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
+
+    }
+
+
+    @PutMapping("/{idConta}/rendimentos")
+    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta) throws ContaNaoEncontradaException, SQLException {
+
+        boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
+        LOGGER.info("Taxa de Rendimentos aplicado com Sucesso");
+        return ResponseEntity.ok("Rendimento aplicado com sucesso");
+
+    }
+
+    @GetMapping("/exibirSaldoDetalhado")
+    public ResponseEntity<?> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta) throws SQLException {
+
+        Conta conta = contaService.buscarContaPorClienteEConta(cpf, numConta);
+        ContaResponseDTO contaResponseDTO = new ContaResponseDTO(conta.getCliente().getNome(),
+                conta.getCliente().getCpf(), conta);
+        LOGGER.info("Exibir detalhes da conta...");
+        return ResponseEntity.ok(contaResponseDTO);
+
+    }
 
 }

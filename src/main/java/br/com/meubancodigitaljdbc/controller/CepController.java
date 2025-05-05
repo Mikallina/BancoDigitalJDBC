@@ -2,13 +2,17 @@ package br.com.meubancodigitaljdbc.controller;
 
 import br.com.meubancodigitaljdbc.model.Endereco;
 import br.com.meubancodigitaljdbc.service.CepService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class CepController {
-	
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CepController.class);
+
 	private final CepService cepService;
 
     public CepController(CepService cepService) {
@@ -17,6 +21,7 @@ public class CepController {
 
     @GetMapping("/buscar-endereco/{cep}")
     public Endereco buscarEndereco(@PathVariable String cep) {
+        LOGGER.info("Busando CEP" + cep);
         return cepService.buscarEnderecoPorCep(cep);
     }
 

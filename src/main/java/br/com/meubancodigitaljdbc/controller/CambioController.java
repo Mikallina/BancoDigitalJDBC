@@ -1,10 +1,17 @@
 package br.com.meubancodigitaljdbc.controller;
-import java.util.Map;
 
 import br.com.meubancodigitaljdbc.service.CambioService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/cambio")
@@ -13,26 +20,23 @@ public class CambioController {
     @Autowired
     private CambioService cambioService;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
     @GetMapping("/converter")
     public ResponseEntity<?> converter(
             @RequestParam double valor,
             @RequestParam String moedaBase,
-            @RequestParam String moedaDestino) {
-        try {
-            double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
-            return ResponseEntity.ok("Valor convertido: R$ " + valorConvertido);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erro: " + e.getMessage());
-        }
+            @RequestParam String moedaDestino) throws Exception {
+
+        double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
+        LOGGER.info("Conversão de moedas" + moedaBase  + moedaDestino);
+        return ResponseEntity.ok(valorConvertido);
     }
+
     @GetMapping("/moedas")
-    public ResponseEntity<?> listarMoedas() {
-        try {
-            Map<String, String> moedas = cambioService.obterMoedasDisponiveis();
-            return ResponseEntity.ok(moedas);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erro ao obter as moedas disponíveis: " + e.getMessage());
-        }
+    public ResponseEntity<?> listarMoedas() throws Exception {
+        Map<String, String> moedas = cambioService.obterMoedasDisponiveis();
+        LOGGER.info("Moedas" + moedas);
+        return ResponseEntity.ok(moedas);
     }
-    
+
 }

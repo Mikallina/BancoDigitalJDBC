@@ -4,8 +4,11 @@ import br.com.meubancodigitaljdbc.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Endereco;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -14,12 +17,14 @@ import java.util.regex.Pattern;
 @Service
 public class ClienteService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClienteService.class);
     @Autowired
     private ClienteDAO clienteDAO;
 
-    public void salvarCliente(Cliente cliente, boolean isAtualizar) throws Exception {
+    public boolean salvarCliente(Cliente cliente, boolean isAtualizar) throws Exception {
         validarCliente(cliente, isAtualizar);
         clienteDAO.save(cliente);
+        return isAtualizar;
     }
 
     public Cliente buscarClientePorCpf(String cpf) {
@@ -34,12 +39,15 @@ public class ClienteService {
         return clienteDAO.findById(clienteId);
     }
 
-    public void deletarCliente(Long clienteId) {
+    public void deletarCliente(Long clienteId) throws ClienteInvalidoException {
         Optional<Cliente> clienteExistente = clienteDAO.findById(clienteId);
-        if (clienteExistente.isPresent()) {
-            clienteDAO.deleteById(clienteId);
+
+        if (clienteExistente.isEmpty()) {
+            throw new ClienteInvalidoException("Cliente com ID " + clienteId + " não encontrado.");
         }
 
+        clienteDAO.deleteById(clienteId);
+        LOGGER.info("Cliente com ID {} deletado com sucesso", clienteId);
     }
 
     private void validarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException {
@@ -103,7 +111,7 @@ public class ClienteService {
     public boolean validarCEP(String cep) {
         String regex = "^[0-9]{5}-[0-9]{3}$";
         Pattern pattern = Pattern.compile(regex);
-        return Pattern.matches(regex,cep);
+        return Pattern.matches(regex, cep);
     }
 
     public boolean validarDataNascimento(LocalDate dataNascimento) {

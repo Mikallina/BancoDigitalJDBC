@@ -1,12 +1,10 @@
 package br.com.meubancodigitaljdbc.service;
 
 import br.com.meubancodigitaljdbc.dao.CartaoDAO;
+import br.com.meubancodigitaljdbc.dto.CompraCartaoDTO;
 import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.enuns.TipoCartao;
-import br.com.meubancodigitaljdbc.execptions.CartaoFaturaException;
-import br.com.meubancodigitaljdbc.execptions.CartaoNaoEncontradoException;
-import br.com.meubancodigitaljdbc.execptions.CartaoNuloException;
-import br.com.meubancodigitaljdbc.execptions.CartaoStatusException;
+import br.com.meubancodigitaljdbc.execptions.*;
 import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
@@ -28,10 +26,11 @@ public class CartaoService {
 
 	private static final Random RANDOM = new Random();
 
+    private final ContaService contaService;
 
     @Autowired
-    public CartaoService(CartaoDAO cartaoDAO) {
-
+    public CartaoService(CartaoDAO cartaoDAO, ContaService contaService) {
+        this.contaService = contaService;
         this.cartaoDAO = cartaoDAO;
 
     }
@@ -94,19 +93,26 @@ public class CartaoService {
         return cartaoDAO.save(cartao);
     }
 
+    public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao)
+            throws CartaoStatusException, CartaoNuloException, SQLException {
 
-    public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao) throws CartaoStatusException, CartaoNuloException, SQLException {
+        if (cartao == null) {
+            throw new CartaoNuloException("Cartão não pode ser nulo");
+        }
+
         if (!cartao.isStatus()) {
             throw new CartaoStatusException("Status do Cartão Desativado");
         }
-        if (cartao.getSenha() == senhaAntiga) {
-            cartao.setSenha(senhaNova);
-            salvarCartao(cartao, true);
-            return true;
-        } else {
-            return true;
+
+        if (cartao.getSenha() != senhaAntiga) {
+            return false; // Senha antiga incorreta
         }
+
+        cartao.setSenha(senhaNova);
+        salvarCartao(cartao, true);
+        return true;
     }
+
 
     public boolean alterarLimiteCartao(String numCartao, double novoLimite) throws CartaoStatusException, SQLException, CartaoNuloException {
         Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
@@ -215,42 +221,42 @@ public class CartaoService {
 		return (10 - (soma % 10)) % 10;
 	}
 
-    public boolean realizarCompra(String numCartao, double valor, LocalDate dataCompra) throws CartaoNaoEncontradoException, CartaoStatusException, SQLException, CartaoNuloException {
-        if (valor <= 0) {
+    public boolean realizarCompra(CompraCartaoDTO dto)
+            throws CartaoNaoEncontradoException, CartaoStatusException, SQLException, CartaoNuloException {
 
+        if (dto.getValor() <= 0) {
             return false;
         }
-        Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
+
+        Cartao cartao = cartaoDAO.buscarPorNumero(dto.getNumCartao());
 
         if (cartao == null) {
-            throw new CartaoNaoEncontradoException("Cartão Não encontrado");
+            throw new CartaoNaoEncontradoException("Cartão não encontrado");
         }
+
         if (!cartao.isStatus()) {
-            throw new CartaoStatusException("Status do Cartão Desativado");
+            throw new CartaoStatusException("Status do cartão desativado");
         }
 
-        if (cartao instanceof CartaoCredito) {
-            CartaoCredito cartaoCredito = (CartaoCredito) cartao;
-
-            if (cartaoCredito.getLimiteCredito() > valor) {
-                cartaoCredito.setSaldoMes(cartaoCredito.getSaldoMes() + valor);
-                cartaoCredito.setSaldoCredito(cartaoCredito.getLimiteCredito() - valor);
-                cartaoCredito.setPagamento(cartaoCredito.getPagamento() + valor);
-
-                cartaoCredito.setDataCompra(dataCompra);
-                salvarCartao(cartao, true);
-
-                System.out.println("Pagamento realizado com sucesso.");
-                return true;
-            } else {
-                System.out.println("Limite de crédito excedido.");
-                return false;
-            }
-        } else {
-            System.out.println("Este cartão não é de crédito.");
+        if (!(cartao instanceof CartaoCredito)) {
             return false;
         }
+
+        CartaoCredito cartaoCredito = (CartaoCredito) cartao;
+
+        if (cartaoCredito.getLimiteCredito() <= dto.getValor()) {
+            return false;
+        }
+
+        cartaoCredito.setSaldoMes(cartaoCredito.getSaldoMes() + dto.getValor());
+        cartaoCredito.setSaldoCredito(cartaoCredito.getLimiteCredito() - dto.getValor());
+        cartaoCredito.setPagamento(cartaoCredito.getPagamento() + dto.getValor());
+        cartaoCredito.setDataCompra(dto.getDataCompra());
+
+        salvarCartao(cartaoCredito, true);
+        return true;
     }
+
 
     public boolean realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
         Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
@@ -300,14 +306,22 @@ public class CartaoService {
 		return cartaoOptional.orElse(null);
 	}
 
-    public List<Cartao> buscarCartaoPorConta(Conta conta) throws SQLException {
-        return cartaoDAO.buscarPorConta(conta);
+    public List<Cartao> buscarCartaoPorConta(String numeroConta) throws SQLException, ContaNaoEncontradaException, CartaoNaoEncontradoException {
+        Conta conta = contaService.buscarContas(numeroConta);
+
+        if (conta == null) {
+            throw new ContaNaoEncontradaException("Conta não encontrada para o número: " + numeroConta);
+        }
+
+        List<Cartao> cartoes = cartaoDAO.buscarPorConta(conta);
+
+        if (cartoes == null || cartoes.isEmpty()) {
+            throw new CartaoNaoEncontradoException("Nenhum cartão encontrado para a conta: " + numeroConta);
+        }
+
+        return cartoes;
     }
 
-    public Cartao buscarCartaoPorNumero(String numCartao) throws SQLException {
-
-        return cartaoDAO.buscarPorNumero(numCartao);
-    }
 
     public double consultarFatura(String numCartao) throws SQLException {
         Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);

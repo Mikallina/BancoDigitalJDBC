@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.mapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;

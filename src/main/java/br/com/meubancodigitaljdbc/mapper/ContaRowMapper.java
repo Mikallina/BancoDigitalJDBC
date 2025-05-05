@@ -9,38 +9,24 @@ import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
-
+@Component
 public class ContaRowMapper implements RowMapper<Conta> {
 
     @Autowired
     private ClienteDAO clienteDAO;
 
-    @Override
-    public Conta mapRow(ResultSet rs, int rowNum) throws SQLException {
-        TipoConta tipoConta = TipoConta.valueOf(rs.getString("tipo_conta"));
-        Conta conta;
 
-        if (tipoConta == TipoConta.CORRENTE) {
-            conta = new ContaCorrente();
-        } else if (tipoConta == TipoConta.POUPANCA) {
-            conta = new ContaPoupanca();
-        } else {
-            throw new SQLException("Tipo de conta desconhecido: " + tipoConta);
-        }
-
-        // Preenche os dados básicos da Conta
-        conta.setIdConta(rs.getLong("id_conta"));
-        conta.setTipoConta(tipoConta);
-        conta.setAgencia(rs.getInt("agencia"));
-        conta.setNumConta(rs.getString("num_conta"));
-        conta.setSaldo(rs.getDouble("saldo"));
-
-        // Recupera o Cliente
+    private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
+        // Obtém o tipo de conta
+        TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
         long clienteId = rs.getLong("cliente_id");
+
+        // Busca o cliente associada à conta
         Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
 
         if (optionalCliente.isEmpty()) {
@@ -49,17 +35,44 @@ public class ContaRowMapper implements RowMapper<Conta> {
 
         Cliente cliente = optionalCliente.get();
 
-        // Verifica a categoria do Cliente
+        // Verifica se o cliente não é nulo e se a categoria do cliente está presente
+        if (cliente.getCategoria() == null) {
+            throw new RuntimeException("Categoria do cliente está nula.");
+        }
+
+        // Cria a conta com base no tipo
+        Conta conta;
+        if (tipo == TipoConta.CORRENTE) {
+            conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
+        } else if (tipo == TipoConta.POUPANCA) {
+            conta = new ContaPoupanca(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
+        } else {
+            throw new RuntimeException("Tipo de conta desconhecido: " + tipo);
+        }
+
+        // Define os dados da conta
+        conta.setIdConta(rs.getLong("id_conta"));
+        conta.setSaldo(rs.getDouble("saldo"));
+
+        // Já setando o cliente com todos os dados necessários
+        cliente.setIdCliente(rs.getLong("cliente_id"));
         String categoriaStr = rs.getString("categoria");
+
         if (categoriaStr != null && !categoriaStr.isEmpty()) {
             cliente.setCategoria(Categoria.valueOf(categoriaStr));
         } else {
-            throw new SQLException("Categoria do cliente não encontrada ou inválida.");
+            throw new SQLException("Categoria não encontrada ou inválida.");
         }
 
-        // Atribui o Cliente à Conta
         conta.setCliente(cliente);
 
         return conta;
+    }
+
+
+
+    @Override
+    public Conta mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return mapResultSetToConta(rs);
     }
 }

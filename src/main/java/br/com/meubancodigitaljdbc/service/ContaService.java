@@ -80,6 +80,8 @@ public class ContaService {
     }
 
     public Conta criarConta(Cliente cliente, int agencia, TipoConta tipoConta) throws SQLException, ContaNaoEncontradaException {
+
+
         String numConta = gerarNumeroConta(agencia, tipoConta);
         Conta conta;
 
