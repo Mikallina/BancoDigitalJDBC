@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.controller;
 
 import br.com.meubancodigitaljdbc.service.CambioService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +26,17 @@ public class CambioController {
     public ResponseEntity<?> converter(
             @RequestParam double valor,
             @RequestParam String moedaBase,
-            @RequestParam String moedaDestino) throws Exception {
+            @RequestParam String moedaDestino, HttpServletRequest request) throws Exception {
+
+        long tempoInicio = System.currentTimeMillis();
 
         double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
         LOGGER.info("Conversão de moedas" + moedaBase  + moedaDestino);
+
+        long tempoFinal = System.currentTimeMillis();
+        long tempototal = tempoFinal - tempoInicio;
+
+        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
         return ResponseEntity.ok(valorConvertido);
     }
 
