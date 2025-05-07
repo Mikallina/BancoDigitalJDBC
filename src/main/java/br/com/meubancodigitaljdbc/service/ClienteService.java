@@ -3,47 +3,60 @@ package br.com.meubancodigitaljdbc.service;
 import br.com.meubancodigitaljdbc.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.model.Endereco;
 import br.com.meubancodigitaljdbc.utils.ValidaCpf;
+import br.com.meubancodigitaljdbc.utils.ValidarClienteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 @Service
 public class ClienteService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteService.class);
-    @Autowired
-    private ClienteDAO clienteDAO;
 
-    public boolean salvarCliente(Cliente cliente, boolean isAtualizar) throws Exception {
+    private final ClienteDAO clienteDAO;
+
+    @Autowired
+    public ClienteService(ClienteDAO clienteDAO) {
+        this.clienteDAO = clienteDAO;
+    }
+
+    public boolean salvarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException, SQLException {
+        LOGGER.info("Iniciando processo de {} do cliente com CPF: {}", isAtualizar ? "atualização" : "criação", cliente.getCpf());
+
         validarCliente(cliente, isAtualizar);
         clienteDAO.save(cliente);
+
+        LOGGER.info("Cliente com CPF {} {} com sucesso.", cliente.getCpf(), isAtualizar ? "atualizado" : "cadastrado");
         return isAtualizar;
     }
 
     public Cliente buscarClientePorCpf(String cpf) {
+        LOGGER.info("Buscando cliente por CPF: {}", cpf);
         return clienteDAO.findByCpf(cpf);
     }
 
     public List<Cliente> listarClientes() {
+        LOGGER.info("Listando todos os clientes");
         return clienteDAO.findAll();
     }
 
     public Optional<Cliente> findById(Long clienteId) {
+        LOGGER.info("Buscando cliente por ID: {}", clienteId);
         return clienteDAO.findById(clienteId);
     }
 
     public void deletarCliente(Long clienteId) throws ClienteInvalidoException {
+        LOGGER.info("Tentando deletar cliente com ID: {}", clienteId);
         Optional<Cliente> clienteExistente = clienteDAO.findById(clienteId);
 
         if (clienteExistente.isEmpty()) {
+            LOGGER.warn("Cliente com ID {} não encontrado para deleção.", clienteId);
             throw new ClienteInvalidoException("Cliente com ID " + clienteId + " não encontrado.");
         }
 
@@ -53,26 +66,30 @@ public class ClienteService {
 
     private void validarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException {
         if (!validarCpf(cliente.getCpf(), isAtualizar, cliente.getIdCliente())) {
+            LOGGER.error("Validação de CPF falhou: {}", cliente.getCpf());
             throw new ClienteInvalidoException("CPF inválido ou já cadastrado.");
         }
-        if (!validarNome(cliente.getNome())) {
+        if (!ValidarClienteUtils.validarNome(cliente.getNome())) {
+            LOGGER.error("Validação de nome falhou: {}", cliente.getNome());
             throw new ClienteInvalidoException("Nome inválido.");
         }
-        if (!validarEndereco(cliente.getEndereco())) {
+        if (!ValidarClienteUtils.validarEndereco(cliente.getEndereco())) {
+            LOGGER.error("Validação de endereço falhou: {}", cliente.getEndereco());
             throw new ClienteInvalidoException("Endereço inválido.");
         }
-        if (!validarDataNascimento(cliente.getDataNascimento())) {
+        if (!ValidarClienteUtils.validarDataNascimento(cliente.getDataNascimento())) {
+            LOGGER.error("Validação de data de nascimento falhou: {}", cliente.getDataNascimento());
             throw new ClienteInvalidoException("Data de nascimento inválida.");
         }
+
+        LOGGER.debug("Validação do cliente concluída com sucesso.");
 
     }
 
     public boolean validarCpf(String cpf, boolean isAtualizar, Long clienteId) {
-        ValidaCpf validaCpf = new ValidaCpf();
-        if (!validaCpf.isCPF(cpf)) {
+        if (!ValidaCpf.isCPF(cpf)) {
             return false;
         }
-
         if (isAtualizar) {
             Cliente clienteExistente = clienteDAO.findByCpf(cpf);
 
@@ -86,62 +103,6 @@ public class ClienteService {
             }
         }
         return true;
-    }
-
-    public boolean validarNome(String nome) {
-        if (nome.length() < 2 || nome.length() > 100) {
-
-            return false;
-        }
-        if (!nome.matches("[a-zA-Z ]+")) {
-
-            return false;
-        }
-        return true;
-    }
-
-    public boolean validarEndereco(Endereco endereco) {
-        if (endereco.getLogradouro().isEmpty() || endereco.getNumero() == null || endereco.getBairro().isEmpty()
-                || endereco.getLocalidade().isEmpty()) {
-            System.out.println("Endereço Inválido");
-            return false;
-        }
-        return true;
-    }
-
-    public boolean validarCEP(String cep) {
-        String regex = "^[0-9]{5}-[0-9]{3}$";
-        Pattern pattern = Pattern.compile(regex);
-        return Pattern.matches(regex, cep);
-    }
-
-    public boolean validarDataNascimento(LocalDate dataNascimento) {
-        try {
-            if (dataNascimento.isAfter(LocalDate.now())) {
-
-                return false;
-            }
-            int idade = calcularIdade(dataNascimento);
-            if (idade < 18) {
-
-                return false;
-            }
-            return true;
-
-        } catch (Exception e) {
-
-            return false;
-        }
-    }
-
-    private int calcularIdade(LocalDate dataNascimento) {
-        int idade = LocalDate.now().getYear() - dataNascimento.getYear();
-        if (dataNascimento.getMonthValue() > LocalDate.now().getMonthValue()
-                || (dataNascimento.getMonthValue() == LocalDate.now().getMonthValue()
-                && dataNascimento.getDayOfMonth() > LocalDate.now().getDayOfMonth())) {
-            idade--;
-        }
-        return idade;
     }
 
 }
