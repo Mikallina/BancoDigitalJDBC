@@ -79,6 +79,46 @@ public class ContaDAO {
         return null;
     }
 
+    public Cliente buscarClientePorCpf(String cpf) throws SQLException {
+        String sql = "SELECT * FROM cliente WHERE cpf = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, cpf);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Cliente cliente = new Cliente();
+                    cliente.setIdCliente(rs.getLong("id_cliente"));
+                    cliente.setNome(rs.getString("nome"));
+                    cliente.setCpf(rs.getString("cpf"));
+                    // Preencher outras propriedades de Cliente
+                    return cliente;
+                } else {
+                    return null;  // Retorna null se não encontrar o cliente
+                }
+            }
+        }
+    }
+
+    public Conta buscarContaPorId(Long idConta) throws SQLException {
+        String sql = "SELECT * FROM conta WHERE id_conta = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idConta);  // Definindo o valor do idConta na consulta
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapearConta(rs);
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
 
     public Optional<Conta> findById(Long id) {
         String sql = "SELECT c.*, cl.categoria FROM conta c JOIN cliente cl ON c.cliente_id = cl.id_cliente WHERE c.id_conta = ?";

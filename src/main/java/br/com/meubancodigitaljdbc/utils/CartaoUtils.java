@@ -1,7 +1,7 @@
 package br.com.meubancodigitaljdbc.utils;
 import java.util.Random;
 
-public class GerarNumCartao {
+public class CartaoUtils {
 
     private static final Random RANDOM = new Random();
 

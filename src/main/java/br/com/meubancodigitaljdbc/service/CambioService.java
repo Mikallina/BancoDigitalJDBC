@@ -5,13 +5,12 @@ import br.com.meubancodigitaljdbc.execptions.CambioException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
 @Service
 public class CambioService {
-    private RestTemplate restTemplate;
+
 
     @Value("${api.cambio.url}")
     private String apiUrl;
@@ -19,11 +18,14 @@ public class CambioService {
     @Value("${api.cambio.key}")
     private String apiKey;
 
-    @Autowired
-    private CambioClient cambioClient;
+
+    private final CambioClient cambioClient;
 
     private static final String CONVERSION_RATES_KEY = "conversion_rates";
-
+    @Autowired
+    public CambioService(CambioClient cambioClient) {
+        this.cambioClient = cambioClient;
+    }
 
 
     public double obterCotacao(String moedaBase, String moedaDestino) throws Exception {

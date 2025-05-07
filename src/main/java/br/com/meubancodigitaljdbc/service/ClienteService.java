@@ -3,7 +3,7 @@ package br.com.meubancodigitaljdbc.service;
 import br.com.meubancodigitaljdbc.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.utils.ValidaCpf;
+import br.com.meubancodigitaljdbc.utils.ValidaCpfUtils;
 import br.com.meubancodigitaljdbc.utils.ValidarClienteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +87,7 @@ public class ClienteService {
     }
 
     public boolean validarCpf(String cpf, boolean isAtualizar, Long clienteId) {
-        if (!ValidaCpf.isCPF(cpf)) {
+        if (!ValidaCpfUtils.isCPF(cpf)) {
             return false;
         }
         if (isAtualizar) {

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-public class ValidaCpf {
+public class ValidaCpfUtils {
 
     public static boolean isCPF(String CPF) {
         // considera-se erro CPF"s formados por uma sequencia de numeros iguais

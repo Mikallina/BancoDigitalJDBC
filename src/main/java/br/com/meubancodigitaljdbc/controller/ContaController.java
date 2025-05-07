@@ -139,7 +139,7 @@ public class ContaController {
     }
 
     @PutMapping("/{idConta}/manutencao")
-    public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta, HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
+    public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta, HttpServletRequest request) throws SQLException{
         long tempoInicio = System.currentTimeMillis();
 
         contaService.aplicarTaxaOuRendimento(idConta, TipoConta.CORRENTE, true);
@@ -156,7 +156,7 @@ public class ContaController {
 
 
     @PutMapping("/{idConta}/rendimentos")
-    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta,HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
+    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta,HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);

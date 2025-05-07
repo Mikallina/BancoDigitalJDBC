@@ -9,7 +9,7 @@ import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.model.Conta;
-import br.com.meubancodigitaljdbc.utils.GerarNumCartao;
+import br.com.meubancodigitaljdbc.utils.CartaoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -207,7 +207,7 @@ public class CartaoService {
 
     public String gerarNumeroCartao() {
 
-        GerarNumCartao numCartao = new GerarNumCartao();
+        CartaoUtils numCartao = new CartaoUtils();
 
         return numCartao.gerarNumeroAleatorio(15) + numCartao.calcularDigitoLuhn(String.valueOf(15));
     }
