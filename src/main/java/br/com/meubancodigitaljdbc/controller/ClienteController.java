@@ -1,9 +1,7 @@
 package br.com.meubancodigitaljdbc.controller;
 
-import br.com.meubancodigitaljdbc.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.service.CepService;
 import br.com.meubancodigitaljdbc.service.ClienteService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -21,26 +19,27 @@ import java.util.Optional;
 @RequestMapping("/cliente")
 public class ClienteController {
 
-    @Autowired
-    private ClienteService clienteService;
+    private final ClienteService clienteService;
 
     @Autowired
-    private ClienteDAO clienteDAO;
-
-    @Autowired
-    private CepService cepService;
+    public ClienteController(ClienteService clienteService) {
+        this.clienteService = clienteService;
+    }
+    private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteController.class);
+
+
     @PostMapping("/adicionar-cliente")
     public boolean addCliente(@RequestBody Cliente cliente,HttpServletRequest request) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = clienteService.salvarCliente(cliente, false);
 
-        LOGGER.info("Adicionar cliente" + cliente);
+        LOGGER.info("Adicionar cliente: {} ", cliente);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return sucesso;
     }
@@ -51,10 +50,10 @@ public class ClienteController {
 
         Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 
-        LOGGER.info("Buscar cliente" + cliente);
+        LOGGER.info("Buscar cliente: {} ", cliente);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok(cliente);
 
@@ -67,12 +66,12 @@ public class ClienteController {
 
         List<Cliente> clientes = clienteService.listarClientes();
 
-        LOGGER.info("Listar clientes" + clientes);
+        LOGGER.info("Listar clientes {}", clientes);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: ");
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal);
 
-        return new ResponseEntity<List<Cliente>>(clientes, HttpStatus.OK);
+        return new ResponseEntity<>(clientes, HttpStatus.OK);
 
     }
 
@@ -82,10 +81,10 @@ public class ClienteController {
 
         Optional<Cliente> clienteOptional = clienteService.findById(clienteId);
 
-        LOGGER.info("Buscar cliente por ID" + clienteOptional);
+        LOGGER.info("Buscar cliente por ID: {} ", clienteOptional);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return clienteOptional
                 .map(ResponseEntity::ok)
@@ -98,10 +97,10 @@ public class ClienteController {
         long tempoInicio = System.currentTimeMillis();
         Optional<Cliente> clienteExistente = clienteService.findById(clienteId);
 
-        LOGGER.info("Atualizar cliente por ID" + clienteId);
+        LOGGER.info("Atualizar cliente por ID {}", clienteId);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return clienteExistente;
     }
@@ -113,10 +112,10 @@ public class ClienteController {
 
         clienteService.deletarCliente(clienteId);
 
-        LOGGER.info("Deletar Cliente" + clienteId);
+        LOGGER.info("Deletar Cliente {}", clienteId);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok("Cliente deletado com sucesso.");
     }
