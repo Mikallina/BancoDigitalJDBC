@@ -23,11 +23,11 @@ public class CepController {
     @GetMapping("/buscar-endereco/{cep}")
     public Endereco buscarEndereco(@PathVariable String cep, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
-        LOGGER.info("Busando CEP" + cep);
+        LOGGER.info("Busando CEP: {}", cep);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info("Tempo Decorrido: {} millisegundos {} ",tempototal, request.getRequestURI());
         return cepService.buscarEnderecoPorCep(cep);
 
 
