@@ -13,7 +13,7 @@ public class CepController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CepController.class);
 
-	private final CepService cepService;
+    private final CepService cepService;
 
     public CepController(CepService cepService) {
         this.cepService = cepService;
@@ -21,8 +21,13 @@ public class CepController {
 
     @GetMapping("/buscar-endereco/{cep}")
     public Endereco buscarEndereco(@PathVariable String cep) {
+        long tempoInicio = System.currentTimeMillis();
         LOGGER.info("Busando CEP" + cep);
         return cepService.buscarEnderecoPorCep(cep);
+        long tempoFinal = System.currentTimeMillis();
+        long tempototal = tempoFinal - tempoInicio;
+
+        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
     }
 
 }

@@ -35,8 +35,8 @@ public class CambioController {
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-
         LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
         return ResponseEntity.ok(valorConvertido);
     }
 
