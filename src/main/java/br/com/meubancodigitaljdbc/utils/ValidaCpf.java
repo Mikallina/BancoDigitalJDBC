@@ -1,4 +1,4 @@
-package br.com.meubancodigitaljdbc.service;
+package br.com.meubancodigitaljdbc.utils;
 
 import java.util.InputMismatchException;
 

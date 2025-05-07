@@ -5,6 +5,7 @@ import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.service.CepService;
 import br.com.meubancodigitaljdbc.service.ClienteService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class ClienteController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteController.class);
     @PostMapping("/adicionar-cliente")
-    public boolean addCliente(@RequestBody Cliente cliente) throws Exception {
+    public boolean addCliente(@RequestBody Cliente cliente,HttpServletRequest request) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = clienteService.salvarCliente(cliente, false);
@@ -45,7 +46,7 @@ public class ClienteController {
     }
 
     @GetMapping("/buscarCpf/{cpf}")
-    public ResponseEntity<Cliente> buscarClientePorCpf(@PathVariable String cpf) {
+    public ResponseEntity<Cliente> buscarClientePorCpf(@PathVariable String cpf, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
 
         Cliente cliente = clienteService.buscarClientePorCpf(cpf);
@@ -69,14 +70,14 @@ public class ClienteController {
         LOGGER.info("Listar clientes" + clientes);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: ");
 
         return new ResponseEntity<List<Cliente>>(clientes, HttpStatus.OK);
 
     }
 
     @GetMapping("/cadastro-cliente/{clienteId}")
-    public ResponseEntity<Cliente> buscarClientePorID(@PathVariable Long clienteId) {
+    public ResponseEntity<Cliente> buscarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
 
         Optional<Cliente> clienteOptional = clienteService.findById(clienteId);
@@ -93,8 +94,7 @@ public class ClienteController {
     }
 
     @PutMapping("/atualizar-cliente/{clienteId}")
-    public Optional<Cliente> atualizarClientePorID(@PathVariable Long clienteId,
-                                                   @RequestBody Cliente clienteAtualizado) {
+    public Optional<Cliente> atualizarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
         Optional<Cliente> clienteExistente = clienteService.findById(clienteId);
 
@@ -108,7 +108,7 @@ public class ClienteController {
 
 
     @DeleteMapping("/deletar-cliente/{clienteId}")
-    public ResponseEntity<String> deletarClientePorID(@PathVariable Long clienteId) throws ClienteInvalidoException {
+    public ResponseEntity<String> deletarClientePorID(@PathVariable Long clienteId,HttpServletRequest request) throws ClienteInvalidoException {
         long tempoInicio = System.currentTimeMillis();
 
         clienteService.deletarCliente(clienteId);

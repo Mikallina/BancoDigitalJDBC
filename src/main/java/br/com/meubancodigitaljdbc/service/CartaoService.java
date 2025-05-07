@@ -9,6 +9,7 @@ import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.model.Conta;
+import br.com.meubancodigitaljdbc.utils.GerarNumCartao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,6 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 
 @Service
@@ -24,14 +24,13 @@ public class CartaoService {
 
     private final CartaoDAO cartaoDAO;
 
-	private static final Random RANDOM = new Random();
-
     private final ContaService contaService;
 
     @Autowired
     public CartaoService(CartaoDAO cartaoDAO, ContaService contaService) {
         this.contaService = contaService;
         this.cartaoDAO = cartaoDAO;
+
 
     }
 
@@ -48,10 +47,14 @@ public class CartaoService {
         }
     }
 
-    public Cartao criarCartao(Conta conta, TipoCartao tipoCartao, int senha, String diaVencimento) throws SQLException {
+    public Cartao criarCartao(String contaC, TipoCartao tipoCartao, int senha, String diaVencimento) throws SQLException {
+        Conta conta = contaService.buscarContas(contaC);
+
         if (conta == null) {
             throw new IllegalArgumentException("Erro: Cliente não pode ser null.");
         }
+
+
         LocalDate dataVencimento = null;
         if (tipoCartao == TipoCartao.CREDITO) {
             if (diaVencimento == null) {
@@ -93,8 +96,10 @@ public class CartaoService {
         return cartaoDAO.save(cartao);
     }
 
-    public boolean alterarSenha(int senhaAntiga, int senhaNova, Cartao cartao)
+    public boolean alterarSenha(int senhaAntiga, int senhaNova, String numCartao)
             throws CartaoStatusException, CartaoNuloException, SQLException {
+
+        Cartao cartao = buscarCartaoPorCliente(numCartao);
 
         if (cartao == null) {
             throw new CartaoNuloException("Cartão não pode ser nulo");
@@ -188,38 +193,13 @@ public class CartaoService {
 
 
 	public String gerarNumeroCartao() {
-		return gerarNumeroAleatorio(15) + calcularDigitoLuhn(gerarNumeroAleatorio(15));
+
+        GerarNumCartao numCartao = new GerarNumCartao();
+
+        return numCartao.gerarNumeroAleatorio(15) + numCartao.calcularDigitoLuhn(String.valueOf(15));
 	}
 
-	private String gerarNumeroAleatorio(int tamanho) {
-		StringBuilder numero = new StringBuilder();
 
-		for (int i = 0; i < tamanho; i++) {
-			numero.append(RANDOM.nextInt(10));
-		}
-
-		return numero.toString();
-	}
-
-	private int calcularDigitoLuhn(String numeroParcial) {
-		int soma = 0;
-		boolean alternar = false;
-		for (int i = numeroParcial.length() - 1; i >= 0; i--) {
-			int digito = Integer.parseInt(String.valueOf(numeroParcial.charAt(i)));
-
-			if (alternar) {
-				digito *= 2;
-				if (digito > 9) {
-					digito -= 9;
-				}
-			}
-
-			soma += digito;
-			alternar = !alternar;
-		}
-
-		return (10 - (soma % 10)) % 10;
-	}
 
     public boolean realizarCompra(CompraCartaoDTO dto)
             throws CartaoNaoEncontradoException, CartaoStatusException, SQLException, CartaoNuloException {

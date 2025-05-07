@@ -10,6 +10,7 @@ import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.service.ClienteService;
 import br.com.meubancodigitaljdbc.service.ContaService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class ContaController {
 
     @PostMapping("/criarConta")
     public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
-                                            @RequestParam TipoConta tipoConta)
+                                            @RequestParam TipoConta tipoConta, HttpServletRequest request)
             throws SQLException, ContaNaoEncontradaException {
 
         long tempoInicio = System.currentTimeMillis();
@@ -51,7 +52,7 @@ public class ContaController {
 
 
     @GetMapping("/buscarConta/{cpf}")
-    public ResponseEntity<Cliente> buscarClienteComContas(@PathVariable String cpf) throws SQLException {
+    public ResponseEntity<Cliente> buscarClienteComContas(@PathVariable String cpf, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
         Cliente cliente = clienteService.buscarClientePorCpf(cpf);
 
@@ -69,7 +70,7 @@ public class ContaController {
     }
 
     @PostMapping("/depositar")
-    public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO) throws Exception, OperacoesExceptions {
+    public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO,HttpServletRequest request) throws Exception, OperacoesExceptions {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
@@ -83,7 +84,7 @@ public class ContaController {
     }
 
     @PostMapping("/efetuarPIX")
-    public ResponseEntity<String> efetuarPIX(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+    public ResponseEntity<String> efetuarPIX(@RequestBody TransferenciaDTO transferenciaDTO, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.realizarTransferenciaPIX(transferenciaDTO.getValor(),
@@ -98,7 +99,7 @@ public class ContaController {
     }
 
     @PostMapping("/transferirPoupanca")
-    public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+    public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
@@ -115,7 +116,7 @@ public class ContaController {
     }
 
     @PostMapping("/transferirOutrasContas")
-    public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO) throws SQLException {
+    public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO,HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
@@ -132,7 +133,7 @@ public class ContaController {
     }
 
     @PutMapping("/{idConta}/manutencao")
-    public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta) throws ContaNaoEncontradaException, SQLException {
+    public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta, HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
@@ -149,7 +150,7 @@ public class ContaController {
 
 
     @PutMapping("/{idConta}/rendimentos")
-    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta) throws ContaNaoEncontradaException, SQLException {
+    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta,HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
@@ -164,7 +165,7 @@ public class ContaController {
     }
 
     @GetMapping("/exibirSaldoDetalhado")
-    public ResponseEntity<?> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta) throws SQLException {
+    public ResponseEntity<?> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         Conta conta = contaService.buscarContaPorClienteEConta(cpf, numConta);

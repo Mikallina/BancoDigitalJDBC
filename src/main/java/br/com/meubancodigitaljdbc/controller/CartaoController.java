@@ -37,12 +37,17 @@ public class CartaoController {
     public ResponseEntity<Cartao> emitirCartao(@RequestParam String contaC, @RequestParam TipoCartao tipoCartao,
                                                @RequestParam(required = false) String diaVencimento, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
-        Conta conta = contaService.buscarContas(contaC);
-        Cartao cartao = cartaoService.criarCartao(conta, tipoCartao, 1234, diaVencimento);
-        LOGGER.info("Emitir cartão" + tipoCartao);
+
+        Cartao cartao = cartaoService.criarCartao(contaC, tipoCartao, 1234, diaVencimento);
+
+        LOGGER.info("Emitir cartão: " + tipoCartao);
+
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok(cartao);
 
     }
@@ -50,24 +55,34 @@ public class CartaoController {
     @PutMapping("/alterar-senha/{numCartao}")
     public String alterarSenha(@PathVariable String numCartao, @RequestBody AlterarSenhaDTO dto, HttpServletRequest request)
             throws Exception {
+
         long tempoInicio = System.currentTimeMillis();
-        Cartao cartao = cartaoService.buscarCartaoPorCliente(numCartao);
-        boolean sucesso = cartaoService.alterarSenha(dto.getSenhaAntiga(), dto.getSenhaNova(), cartao);
+
+        boolean sucesso = cartaoService.alterarSenha(dto.getSenhaAntiga(), dto.getSenhaNova(), numCartao);
+
         long tempoFinal = System.currentTimeMillis();
-        LOGGER.info("Alterando senha " + numCartao);
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Alterando senha " + numCartao);
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
+
         return "Senha alterada";
     }
 
     @GetMapping("/dados/{numCartao}")
     public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao,  HttpServletRequest request) throws SQLException {
+
         Cartao cartao = cartaoService.buscarCartaoPorCliente(numCartao);
+
         long tempoInicio = System.currentTimeMillis();
         LOGGER.info("Buscando cartão " + numCartao);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok(cartao);
     }
 
@@ -79,7 +94,8 @@ public class CartaoController {
         LOGGER.info("Alterar status do cartão.. " + numCartao);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
         return ResponseEntity.ok(sucesso);
 
     }
@@ -88,57 +104,84 @@ public class CartaoController {
     public ResponseEntity<Boolean> alterarLimite(@PathVariable String numCartao, @RequestBody LimiteDTO limiteDTO, HttpServletRequest request)
             throws Exception {
         long tempoInicio = System.currentTimeMillis();
+
         boolean sucesso = cartaoService.alterarLimiteCartao(numCartao, limiteDTO.getNovoLimite());
+
         LOGGER.info("Alterar limite do cartão.. " + numCartao);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok(sucesso);
     }
 
 
     @GetMapping("/{numeroConta}")
     public ResponseEntity<List<Cartao>> verificarCartao(@PathVariable String numeroConta, HttpServletRequest request) throws SQLException, ContaNaoEncontradaException, CartaoNaoEncontradoException {
+
         long tempoInicio = System.currentTimeMillis();
+
         List<Cartao> cartoes = cartaoService.buscarCartaoPorConta(numeroConta);
+
         LOGGER.info("Verificar cartão.. " + numeroConta);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok(cartoes);
     }
 
     @PostMapping("/compra-cartao")
     public Optional<Boolean> realizarPagamento(@RequestBody CompraCartaoDTO compraCartaoDTO, HttpServletRequest request) throws Exception {
         long tempoInicio = System.currentTimeMillis();
-        boolean sucesso = cartaoService.realizarCompra(compraCartaoDTO);
+
+       boolean sucesso = cartaoService.realizarCompra(compraCartaoDTO);
+
         LOGGER.info("Realizar compra com cartão... " + compraCartaoDTO);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return Optional.of(sucesso);
     }
 
     @GetMapping("/fatura/{numCartao}")
     public ResponseEntity<?> consultarFatura(@PathVariable String numCartao, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
+
         cartaoService.consultarFatura(numCartao);
+
         LOGGER.info("Consultar fatura do cartão... " + numCartao);
+
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok(Map.of());
     }
 
     @PutMapping("/pagar-fatura")
     public ResponseEntity<String> pagarFatura(@RequestBody PagamentoFaturaDTO dto, HttpServletRequest request) throws Exception {
         long tempoInicio = System.currentTimeMillis();
+
         boolean sucesso = cartaoService.realizarPagamentoFatura(dto.getNumCartao(), dto.getValor());
+
         LOGGER.info("Pagar fatura... ");
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+
+        LOGGER.info("Tempo Decorrido: {} milissegundos: {}", tempototal, request.getRequestURI());
+
+
         return ResponseEntity.ok("OK");
 
     }

@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.controller;
 
 import br.com.meubancodigitaljdbc.model.Endereco;
 import br.com.meubancodigitaljdbc.service.CepService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,14 +21,17 @@ public class CepController {
     }
 
     @GetMapping("/buscar-endereco/{cep}")
-    public Endereco buscarEndereco(@PathVariable String cep) {
+    public Endereco buscarEndereco(@PathVariable String cep, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
         LOGGER.info("Busando CEP" + cep);
-        return cepService.buscarEnderecoPorCep(cep);
+
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-
         LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        return cepService.buscarEnderecoPorCep(cep);
+
+
+
     }
 
 }
