@@ -14,9 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @Service
@@ -25,6 +28,8 @@ public class CartaoService {
     private final CartaoDAO cartaoDAO;
 
     private final ContaService contaService;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CartaoService.class);
 
     @Autowired
     public CartaoService(CartaoDAO cartaoDAO, ContaService contaService) {
@@ -54,7 +59,7 @@ public class CartaoService {
             throw new IllegalArgumentException("Erro: Cliente não pode ser null.");
         }
 
-
+        LOGGER.info("Iniciando criação de cartão. Conta: {}, Tipo: {}", contaC, tipoCartao);
         LocalDate dataVencimento = null;
         if (tipoCartao == TipoCartao.CREDITO) {
             if (diaVencimento == null) {
@@ -67,8 +72,8 @@ public class CartaoService {
 
             try {
                 dataVencimento = LocalDate.of(anoAtual, mesAtual, dia);
-            } catch (Exception e) {
-
+            } catch (DateTimeException e) {
+                throw new IllegalArgumentException("Erro: Dia de vencimento inválido.");
             }
 
             if (dataVencimento.isBefore(dataAtual)) {
@@ -80,12 +85,14 @@ public class CartaoService {
             }
         }
 
+
         Cartao cartao;
         String numCartao = gerarNumeroCartao();
 
         if (tipoCartao == TipoCartao.CREDITO) {
             cartao = new CartaoCredito(conta, senha, numCartao, TipoCartao.CREDITO,
                     limiteDeCredito(conta), diaVencimento, dataVencimento);
+            LOGGER.debug("Data de vencimento definida para o cartão de crédito: {}", dataVencimento);
         } else if (tipoCartao == TipoCartao.DEBITO) {
             cartao = new CartaoDebito(conta, numCartao, TipoCartao.DEBITO,
                     senha, limiteDiario(conta));
@@ -93,6 +100,7 @@ public class CartaoService {
             throw new IllegalArgumentException("Tipo de cartão inválido.");
         }
 
+        LOGGER.info("Cartão criado com sucesso. Número: {}", cartao.getNumCartao());
         return cartaoDAO.save(cartao);
     }
 
@@ -100,6 +108,7 @@ public class CartaoService {
             throws CartaoStatusException, CartaoNuloException, SQLException {
 
         Cartao cartao = buscarCartaoPorCliente(numCartao);
+        LOGGER.info("Tentativa de alterar senha para cartão {}", numCartao);
 
         if (cartao == null) {
             throw new CartaoNuloException("Cartão não pode ser nulo");
@@ -110,10 +119,12 @@ public class CartaoService {
         }
 
         if (cartao.getSenha() != senhaAntiga) {
-            return false; // Senha antiga incorreta
+            LOGGER.warn("Senha antiga incorreta para o cartão {}", numCartao);
+            return false;
         }
 
         cartao.setSenha(senhaNova);
+        LOGGER.info("Senha alterada com sucesso para cartão {}", numCartao);
         salvarCartao(cartao, true);
         return true;
     }
@@ -121,11 +132,13 @@ public class CartaoService {
 
     public boolean alterarLimiteCartao(String numCartao, double novoLimite) throws CartaoStatusException, SQLException, CartaoNuloException {
         Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
+        LOGGER.info("Tentando alterar limite do cartão {} para {}", numCartao, novoLimite);
 
         if (cartaoOptional.isPresent()) {
             Cartao cartao = cartaoOptional.get();
 
             if (!cartao.isStatus()) {
+                LOGGER.warn("Cartão {} está inativo. Alteração de limite não permitida.", numCartao);
                 throw new CartaoStatusException("Status do Cartão Desativado");
             }
 
@@ -137,7 +150,7 @@ public class CartaoService {
             } else if (cartao instanceof CartaoDebito cartaoDebito) {
                 cartaoDebito.alterarLimiteDebito(novoLimite);
                 salvarCartao(cartao, true);
-
+                LOGGER.info("Limite alterado com sucesso para cartão {}", numCartao);
                 return true;
             }
         }
@@ -192,17 +205,17 @@ public class CartaoService {
     }
 
 
-	public String gerarNumeroCartao() {
+    public String gerarNumeroCartao() {
 
         GerarNumCartao numCartao = new GerarNumCartao();
 
         return numCartao.gerarNumeroAleatorio(15) + numCartao.calcularDigitoLuhn(String.valueOf(15));
-	}
-
+    }
 
 
     public boolean realizarCompra(CompraCartaoDTO dto)
             throws CartaoNaoEncontradoException, CartaoStatusException, SQLException, CartaoNuloException {
+        LOGGER.info("Processando compra de {} no cartão {}", dto.getValor(), dto.getNumCartao());
 
         if (dto.getValor() <= 0) {
             return false;
@@ -233,15 +246,18 @@ public class CartaoService {
         cartaoCredito.setPagamento(cartaoCredito.getPagamento() + dto.getValor());
         cartaoCredito.setDataCompra(dto.getDataCompra());
 
+        LOGGER.info("Compra realizada com sucesso no cartão {}. Novo saldo: {}", dto.getNumCartao(), cartaoCredito.getSaldoMes());
+
         salvarCartao(cartaoCredito, true);
         return true;
     }
 
 
-    public boolean realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
+    public void realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
         Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
+        LOGGER.info("Iniciando pagamento de fatura. Cartão: {}, Valor: {}", numCartao, valorPagamento);
 
-        if (!(cartao instanceof CartaoCredito)) {
+        if (!(cartao instanceof CartaoCredito cartaoCredito)) {
             throw new CartaoFaturaException("Cartão de crédito não encontrado ou tipo de cartão inválido.");
         }
 
@@ -249,7 +265,6 @@ public class CartaoService {
             throw new CartaoStatusException("Status do Cartão Desativado");
         }
 
-        CartaoCredito cartaoCredito = (CartaoCredito) cartao;
         Conta conta = cartaoCredito.getConta();
 
         if (conta == null) {
@@ -261,30 +276,26 @@ public class CartaoService {
         }
 
         if (conta.getSaldo() < valorPagamento) {
+            LOGGER.warn("Saldo insuficiente na conta para pagamento da fatura do cartão {}", numCartao);
             throw new CartaoFaturaException("Saldo insuficiente na conta para pagar a fatura.");
         }
-
-        // Debita da conta corrente
         conta.setSaldo(conta.getSaldo() - valorPagamento);
 
-        // Realiza o pagamento da fatura no cartão
         boolean pagamentoEfetuado = cartaoCredito.pagarFatura(valorPagamento);
 
         if (!pagamentoEfetuado) {
             throw new CartaoFaturaException("Não foi possível realizar o pagamento da fatura.");
         }
+        LOGGER.info("Pagamento da fatura efetuado com sucesso no cartão {}", numCartao);
 
-        // Salva alterações no cartão e conta
         salvarCartao(cartaoCredito, true);
-        //contaDAO.salvarConta(conta);
 
-        return true;
     }
 
-	public Cartao buscarCartaoPorCliente(String numCartao) throws SQLException {
-		Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
-		return cartaoOptional.orElse(null);
-	}
+    public Cartao buscarCartaoPorCliente(String numCartao) throws SQLException {
+        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
+        return cartaoOptional.orElse(null);
+    }
 
     public List<Cartao> buscarCartaoPorConta(String numeroConta) throws SQLException, ContaNaoEncontradaException, CartaoNaoEncontradoException {
         Conta conta = contaService.buscarContas(numeroConta);
@@ -298,27 +309,20 @@ public class CartaoService {
         if (cartoes == null || cartoes.isEmpty()) {
             throw new CartaoNaoEncontradoException("Nenhum cartão encontrado para a conta: " + numeroConta);
         }
-
+        LOGGER.info("Cartão encontrado: {} ", numeroConta);
         return cartoes;
     }
 
 
-    public double consultarFatura(String numCartao) throws SQLException {
+    public void consultarFatura(String numCartao) throws SQLException {
         Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
 
-        if (cartao == null) {
-            throw new IllegalArgumentException("Cartão não encontrado");
+        if (!(cartao instanceof CartaoCredito)) {
+            throw new IllegalArgumentException("Cartão não é de crédito ou não encontrado");
         }
-
-        if (cartao instanceof CartaoCredito) {
-
-            CartaoCredito cartaoCredito = (CartaoCredito) cartao;
-
-            return cartaoCredito.getSaldoMes();
-        } else {
-
-            throw new IllegalArgumentException("Cartão não é de crédito");
-        }
+        CartaoCredito cartaoCredito = (CartaoCredito) cartao;
+        LOGGER.info("Fatura atual do cartão {}: {}", numCartao, cartaoCredito.getSaldoMes());
     }
+
 
 }
