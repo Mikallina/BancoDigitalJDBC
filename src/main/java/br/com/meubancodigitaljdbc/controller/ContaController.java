@@ -5,7 +5,8 @@ import br.com.meubancodigitaljdbc.dto.DepositoDTO;
 import br.com.meubancodigitaljdbc.dto.TransferenciaDTO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.execptions.ContaNaoEncontradaException;
-import br.com.meubancodigitaljdbc.execptions.OperacoesExceptions;
+import br.com.meubancodigitaljdbc.execptions.ContaNaoValidaException;
+import br.com.meubancodigitaljdbc.execptions.OperacoesException;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.service.ClienteService;
@@ -27,11 +28,16 @@ public class ContaController {
 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContaController.class);
-    @Autowired
-    private ContaService contaService;
+
+    private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
+    private final ContaService contaService;
+    private final ClienteService clienteService;
 
     @Autowired
-    private ClienteService clienteService;
+    public ContaController(ContaService contaService, ClienteService clienteService) {
+        this.contaService = contaService;
+        this.clienteService = clienteService;
+    }
 
     @PostMapping("/criarConta")
     public ResponseEntity<Conta> criarConta(@RequestParam String cpf, @RequestParam int agencia,
@@ -45,7 +51,7 @@ public class ContaController {
         LOGGER.info("Conta criada com sucesso para CPF {}", cpf);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok(conta);
     }
@@ -59,26 +65,26 @@ public class ContaController {
         List<Conta> contas = contaService.buscarContasPorCliente(cliente);
         cliente.setContas(contas);
 
-        LOGGER.info("Cliente encontrado...", cpf);
+        LOGGER.info("Cliente encontrado: {} ", cpf);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
         return ResponseEntity.ok(cliente);
 
 
     }
 
     @PostMapping("/depositar")
-    public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO,HttpServletRequest request) throws Exception, OperacoesExceptions {
+    public ResponseEntity<String> depositar(@RequestBody DepositoDTO depositoDTO,HttpServletRequest request) throws SQLException, OperacoesException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
+        contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());
 
-        LOGGER.info("Depósito realizado na conta {} no valor de R${}", depositoDTO.getNumContaDestino(), depositoDTO.getValor());
+        LOGGER.info("Depósito realizado na conta {} no valor de R$ {}", depositoDTO.getNumContaDestino(), depositoDTO.getValor());
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok("Depósito realizado com sucesso.");
     }
@@ -87,14 +93,14 @@ public class ContaController {
     public ResponseEntity<String> efetuarPIX(@RequestBody TransferenciaDTO transferenciaDTO, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.realizarTransferenciaPIX(transferenciaDTO.getValor(),
+        contaService.realizarTransferenciaPIX(transferenciaDTO.getValor(),
                 transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getChave());
 
         LOGGER.info("PIX realizado com sucesso");
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
         return null;
     }
 
@@ -102,14 +108,14 @@ public class ContaController {
     public ResponseEntity<String> transferirPoupanca(@RequestBody TransferenciaDTO transferenciaDTO, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
+        contaService.realizarTransferenciaPoupanca(transferenciaDTO.getValor(),
                 transferenciaDTO.getNumContaOrigem(), transferenciaDTO.getNumContaDestino());
 
-        LOGGER.info("Transferencia realizada com sucesso.");
+        LOGGER.info("Transferencia realizada com sucesso R$ {}", transferenciaDTO.getValor());
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok("Transferência para conta poupança realizada com sucesso!");
 
@@ -119,14 +125,14 @@ public class ContaController {
     public ResponseEntity<String> transferirOutrasContas(@RequestBody TransferenciaDTO transferenciaDTO,HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
+        contaService.realizarTransferenciaOutrasContas(transferenciaDTO.getValor(),
                 transferenciaDTO.getNumContaDestino(), transferenciaDTO.getNumContaOrigem());
 
         LOGGER.info("Transferencia realizada com sucesso.");
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok("Transferência realizada com sucesso!");
 
@@ -136,13 +142,13 @@ public class ContaController {
     public ResponseEntity<String> aplicarTaxaManutencao(@PathVariable Long idConta, TipoConta tipoConta, HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta.CORRENTE, true);
+        contaService.aplicarTaxaOuRendimento(idConta, TipoConta.CORRENTE, true);
 
         LOGGER.info("Taxa de Manutenção Aplicada");
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
 
@@ -153,11 +159,11 @@ public class ContaController {
     public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta,HttpServletRequest request) throws ContaNaoEncontradaException, SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        boolean sucesso = contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
+        contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         LOGGER.info("Taxa de Rendimentos aplicado com Sucesso");
         return ResponseEntity.ok("Rendimento aplicado com sucesso");
@@ -165,7 +171,7 @@ public class ContaController {
     }
 
     @GetMapping("/exibirSaldoDetalhado")
-    public ResponseEntity<?> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<ContaResponseDTO> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         Conta conta = contaService.buscarContaPorClienteEConta(cpf, numConta);
@@ -177,7 +183,7 @@ public class ContaController {
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info("Tempo Decorrido: " + tempototal + " millisegundos: " + request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return ResponseEntity.ok(contaResponseDTO);
 
