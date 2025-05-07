@@ -1,16 +1,17 @@
 package br.com.meubancodigitaljdbc.service;
 
-import java.util.Map;
-
+import br.com.meubancodigitaljdbc.client.CambioClient;
+import br.com.meubancodigitaljdbc.execptions.CambioException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+
 @Service
 public class CambioService {
-	private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Value("${api.cambio.url}")
     private String apiUrl;
@@ -18,40 +19,40 @@ public class CambioService {
     @Value("${api.cambio.key}")
     private String apiKey;
 
-    public CambioService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    @Autowired
+    private CambioClient cambioClient;
+
+    private static final String CONVERSION_RATES_KEY = "conversion_rates";
+
+
 
     public double obterCotacao(String moedaBase, String moedaDestino) throws Exception {
         try {
 
-        	String url = String.format("%s/%s/latest/%s", apiUrl, apiKey, moedaBase);
+            String url = String.format("%s/%s/latest/%s", apiUrl, apiKey, moedaBase);
 
             // Requisição para obter a resposta da API
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
-
-            // Obtenha o corpo da resposta
-            Map<String, Object> responseBody = response.getBody();
+            Map<String, Object> body = cambioClient.buscarDadosDeCambio(url);
 
             // Verifique se a resposta contém a chave "conversion_rates"
-            if (responseBody == null || !responseBody.containsKey("conversion_rates")) {
-                throw new Exception("A resposta da API não contém a chave 'conversion_rates'.");
+            if (body == null || !body.containsKey(CONVERSION_RATES_KEY)) {
+                throw new CambioException("A resposta da API não contém a chave'" + CONVERSION_RATES_KEY + "'.");
             }
 
             // Acessar o mapa de taxas de câmbio (conversion_rates)
-            Map<String, Double> conversionRates = (Map<String, Double>) responseBody.get("conversion_rates");
+            Map<String, Double> conversionRates = (Map<String, Double>) body.get(CONVERSION_RATES_KEY);
 
             // Verifique se a moeda de destino existe no mapa de taxas
             Double cotacao = conversionRates.get(moedaDestino);
 
             if (cotacao == null) {
-                throw new Exception("Moeda de destino não encontrada.");
+                throw new CambioException("Moeda de destino não encontrada.");
             }
 
             return cotacao;
 
         } catch (Exception e) {
-            throw new Exception("Erro ao buscar cotação: " + e.getMessage());
+            throw new CambioException("Erro ao buscar cotação: " + e.getMessage());
         }
     }
 
@@ -61,31 +62,23 @@ public class CambioService {
         double cotacao = obterCotacao(moedaBase, moedaDestino);
         return valor * cotacao;
     }
-    
+
     public Map<String, String> obterMoedasDisponiveis() throws Exception {
+        String url = String.format("%s/%s/latest/USD", apiUrl, apiKey);
+
+        Map<String, Object> body = cambioClient.buscarDadosDeCambio(url);
+
+        if (body == null || !body.containsKey(CONVERSION_RATES_KEY)) {
+            throw new CambioException("A resposta da API não contém a chave '" + CONVERSION_RATES_KEY + "'.");
+        }
+
         try {
-            // URL corrigida para pegar as taxas de câmbio para USD
-            String url = String.format("%s/%s/latest/USD", apiUrl, apiKey); // Certifique-se de que a URL está correta
-
-            // Requisição para obter a resposta da API
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
-
-            // Obter o corpo da resposta
-            Map<String, Object> responseBody = response.getBody();
-
-            if (responseBody == null || !responseBody.containsKey("conversion_rates")) {
-                throw new Exception("A resposta da API não contém a chave 'conversion_rates'.");
-            }
-
-            // Acessar a chave 'conversion_rates' que contém as moedas e suas taxas
-            Map<String, String> conversionRates = (Map<String, String>) responseBody.get("conversion_rates");
-            System.out.println(conversionRates);
-            return conversionRates;
-
-        } catch (Exception e) {
-            throw new Exception("Erro ao buscar as moedas: " + e.getMessage());
+            return (Map<String, String>) body.get(CONVERSION_RATES_KEY);
+        } catch (ClassCastException e) {
+            throw new CambioException("Erro ao interpretar os dados da API.");
         }
     }
-    
+
+
 
 }

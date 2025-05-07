@@ -31,7 +31,7 @@ public class CambioController {
         long tempoInicio = System.currentTimeMillis();
 
         double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
-        LOGGER.info("Conversão de moedas" + moedaBase  + moedaDestino);
+        LOGGER.info("Conversão de moedas: Moeda Base:  {} Moeda destino: {} ", moedaBase, moedaDestino);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
