@@ -18,12 +18,15 @@ import java.util.Map;
 @RequestMapping("/cambio")
 public class CambioController {
 
+    private final CambioService cambioService;
     @Autowired
-    private CambioService cambioService;
-
+    public CambioController(CambioService cambioService) {
+        this.cambioService = cambioService;
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
+
     @GetMapping("/converter")
-    public ResponseEntity<?> converter(
+    public ResponseEntity<Double> converter(
             @RequestParam double valor,
             @RequestParam String moedaBase,
             @RequestParam String moedaDestino, HttpServletRequest request) throws Exception {
@@ -42,9 +45,9 @@ public class CambioController {
     }
 
     @GetMapping("/moedas")
-    public ResponseEntity<?> listarMoedas() throws Exception {
+    public ResponseEntity<Map<String, String>> listarMoedas() throws Exception {
         Map<String, String> moedas = cambioService.obterMoedasDisponiveis();
-        LOGGER.info("Moedas" + moedas);
+        LOGGER.info("Moedas: {}", moedas);
         return ResponseEntity.ok(moedas);
     }
 
