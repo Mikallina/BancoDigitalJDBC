@@ -5,6 +5,7 @@ import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.model.Conta;
+import br.com.meubancodigitaljdbc.sql.CartaoSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -17,15 +18,16 @@ import java.util.Optional;
 @Repository
 public class CartaoDAO {
 
-    private DataSource dataSource;
+    private final DataSource dataSource;
+    private final ContaDAO contaDAO;
 
     @Autowired
-    public CartaoDAO(DataSource dataSource) {
+    public CartaoDAO(DataSource dataSource, ContaDAO contaDAO) {
         this.dataSource = dataSource;
+        this.contaDAO = contaDAO;
     }
 
-    @Autowired
-    private ContaDAO contaDAO;
+
 
 
     public Cartao save(Cartao cartao) throws SQLException {
@@ -38,10 +40,9 @@ public class CartaoDAO {
             throw new IllegalArgumentException("Conta com ID " + cartao.getConta().getIdConta() + " não encontrada.");
         }
 
-        String sqlCartao = "INSERT INTO cartao (tipo_cartao, num_cartao, senha, status, id_conta, fatura) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sqlCartao, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, cartao.getTipoCartao().name());
             stmt.setString(2, cartao.getNumCartao());
@@ -61,13 +62,10 @@ public class CartaoDAO {
             }
         }
 
-        if (cartao instanceof CartaoCredito) {
-            CartaoCredito c = (CartaoCredito) cartao;
-            String sqlCredito = "INSERT INTO cartao_credito (data_compra, data_vencimento, limite_credito, pagamento, saldo_mes, taxa, id_cartao, dia_vencimento) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        if (cartao instanceof CartaoCredito c) {
 
             try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
+                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO_CREDITO)) {
 
                 if (c.getDataCompra() != null) {
                     stmt.setDate(1, Date.valueOf(c.getDataCompra()));
@@ -91,12 +89,9 @@ public class CartaoDAO {
                 stmt.executeUpdate();
             }
 
-        } else if (cartao instanceof CartaoDebito) {
-            CartaoDebito c = (CartaoDebito) cartao;
-            String sqlDebito = "INSERT INTO cartao_debito (limite_diario, taxa, total_pgto_hoje, id_cartao) VALUES (?, ?, ?, ?)";
-
+        } else if (cartao instanceof CartaoDebito c) {
             try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sqlDebito)) {
+                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO_DEBITO)) {
 
                 stmt.setDouble(1, c.getLimiteDiario());
                 stmt.setDouble(2, c.getTaxa());
@@ -113,15 +108,9 @@ public class CartaoDAO {
 
     public List<Cartao> buscarPorConta(Conta conta) throws SQLException {
         List<Cartao> cartoes = new ArrayList<>();
-        String sql = "SELECT c.*, cc.data_compra, cc.data_vencimento, cc.limite_credito, cc.pagamento, cc.saldo_mes, cc.taxa AS credito_taxa, cc.dia_vencimento, " +
-                "cd.limite_diario, cd.taxa AS debito_taxa, cd.total_pgto_hoje " +
-                "FROM cartao c " +
-                "LEFT JOIN cartao_credito cc ON cc.id_cartao = c.id_cartao " +
-                "LEFT JOIN cartao_debito cd ON cd.id_cartao = c.id_cartao " +
-                "WHERE c.id_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(CartaoSql.BUSCAR_POR_CONTA)) {
 
             stmt.setLong(1, conta.getIdConta());
             ResultSet rs = stmt.executeQuery();
@@ -137,15 +126,8 @@ public class CartaoDAO {
     }
 
     public Cartao buscarPorNumero(String numCartao) throws SQLException {
-        String sql = "SELECT c.*, cc.data_compra, cc.data_vencimento, cc.limite_credito, cc.pagamento, cc.saldo_mes, cc.taxa AS credito_taxa, cc.dia_vencimento, " +
-                "cd.limite_diario, cd.taxa AS debito_taxa, cd.total_pgto_hoje " +
-                "FROM cartao c " +
-                "LEFT JOIN cartao_credito cc ON cc.id_cartao = c.id_cartao " +
-                "LEFT JOIN cartao_debito cd ON cd.id_cartao = c.id_cartao " +
-                "WHERE c.num_cartao = ?";
-
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(CartaoSql.BUSCAR_POR_NUMERO)) {
             stmt.setString(1, numCartao);
             ResultSet rs = stmt.executeQuery();
 
@@ -160,10 +142,9 @@ public class CartaoDAO {
     }
 
     public void atualizar(Cartao cartao) throws SQLException {
-        String sqlCartao = "UPDATE cartao SET senha = ?, status = ?, fatura = ? WHERE num_cartao = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sqlCartao)) {
+             PreparedStatement stmt = conn.prepareStatement(CartaoSql.UPDATE_CARTAO)) {
 
             stmt.setInt(1, cartao.getSenha());
             stmt.setBoolean(2, cartao.isStatus());
@@ -174,10 +155,8 @@ public class CartaoDAO {
         }
 
         if (cartao instanceof CartaoCredito credito) {
-
-            String sqlCredito = "UPDATE cartao_credito SET limite_credito = ?, data_compra = ?, pagamento = ? , saldo_mes = ? WHERE id_cartao = ?";
             try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sqlCredito)) {
+                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.UPDATE_CARTAO_CREDITO)) {
 
                 stmt.setDouble(1, credito.getLimiteCredito());
                 stmt.setDate(2, Date.valueOf(credito.getDataCompra()));
