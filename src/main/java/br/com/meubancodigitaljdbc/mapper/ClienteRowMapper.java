@@ -38,4 +38,8 @@ public class ClienteRowMapper implements RowMapper <Cliente> {
     public Cliente mapRow(ResultSet rs, int rowNum) throws SQLException {
         return mapResultSetToCliente(rs);
     }
+
+    public Cliente mapRow(ResultSet rs) throws SQLException {
+        return mapResultSetToCliente(rs);
+    }
 }
