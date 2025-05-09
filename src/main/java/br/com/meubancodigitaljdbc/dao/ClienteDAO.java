@@ -1,11 +1,8 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.mapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.model.Endereco;
 import br.com.meubancodigitaljdbc.sql.ClienteSql;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
@@ -21,8 +18,9 @@ public class ClienteDAO {
 
     private ClienteRowMapper rowMapper;
 
-    public ClienteDAO(DataSource dataSource){
+    public ClienteDAO(DataSource dataSource, ClienteRowMapper rowMapper){
         this.dataSource = dataSource;
+        this.rowMapper = rowMapper;
     }
 
     public void save(Cliente cliente) throws SQLException {

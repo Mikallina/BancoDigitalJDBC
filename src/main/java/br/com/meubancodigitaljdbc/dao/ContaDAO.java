@@ -1,12 +1,12 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.mapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.sql.ContaSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -19,13 +19,14 @@ import java.util.Optional;
 @Repository
 public class ContaDAO {
 
-
-    @Autowired
-    private ClienteDAO clienteDAO;
+    private final ClienteDAO clienteDAO;
     private final DataSource dataSource;
-
-    public ContaDAO(DataSource dataSource) {
+    private final ContaRowMapper rowMapper;
+    @Autowired
+    public ContaDAO(ClienteDAO clienteDAO, DataSource dataSource, ContaRowMapper rowMapper) {
+        this.clienteDAO = clienteDAO;
         this.dataSource = dataSource;
+        this.rowMapper = rowMapper;
     }
 
     public Conta salvarConta(Conta conta) throws SQLException {
@@ -36,11 +37,8 @@ public class ContaDAO {
         }
         Cliente cliente = optionalCliente.get();
 
-        String sql = "INSERT INTO conta (tipo_conta, agencia, num_conta, saldo, cliente_id) VALUES (?, ?, ?, ?, ?)";
-
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+              try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.INSERIR_CONTA, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, conta.getTipoConta().name());
             stmt.setDouble(2, conta.getAgencia());
@@ -62,28 +60,24 @@ public class ContaDAO {
 
     // Método para buscar conta por número
     public Conta buscarPorNumero(String numeroConta) throws SQLException {
-        String sql = "SELECT c.*, cl.categoria FROM conta c JOIN cliente cl ON c.cliente_id = cl.id_cliente WHERE c.num_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_POR_NUMERO)) {
 
             stmt.setString(1, numeroConta);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                Conta conta = mapResultSetToConta(rs);
-                System.out.println("→ Conta encontrada: " + conta.getNumConta() + " | Saldo do banco: " + conta.getSaldo());
-                return conta;
+                return rowMapper.mapRow(rs);
             }
         }
         return null;
     }
 
     public Cliente buscarClientePorCpf(String cpf) throws SQLException {
-        String sql = "SELECT * FROM cliente WHERE cpf = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CLIENTE_CPF)) {
 
             stmt.setString(1, cpf);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -102,16 +96,15 @@ public class ContaDAO {
     }
 
     public Conta buscarContaPorId(Long idConta) throws SQLException {
-        String sql = "SELECT * FROM conta WHERE id_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CONTA_ID)) {
 
             stmt.setLong(1, idConta);  // Definindo o valor do idConta na consulta
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapearConta(rs);
+                    return rowMapper.mapearconta(rs);
                 } else {
                     return null;
                 }
@@ -121,18 +114,17 @@ public class ContaDAO {
 
 
     public Optional<Conta> findById(Long id) {
-        String sql = "SELECT c.*, cl.categoria FROM conta c JOIN cliente cl ON c.cliente_id = cl.id_cliente WHERE c.id_conta = ?";
         if (id == null) {
             throw new IllegalArgumentException("ID da conta não pode ser null");
         }
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+             PreparedStatement stmt = connection.prepareStatement(ContaSql.BUSCAR_CLIENTE_CAT)) {
 
             stmt.setLong(1, id);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return Optional.of(mapResultSetToConta(rs));
+                return Optional.of(rowMapper.mapRow(rs));
             }
 
         } catch (SQLException e) {
@@ -143,41 +135,16 @@ public class ContaDAO {
     }
 
 
-    private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
-        Conta conta = new ContaCorrente();
-        conta.setTipoConta(TipoConta.valueOf(rs.getString("tipo_conta")));
-        conta.setIdConta(rs.getLong("id_conta"));
-        conta.setAgencia(rs.getInt("agencia"));
-        conta.setNumConta(rs.getString("num_conta"));
-        conta.setSaldo(rs.getDouble("saldo"));
-
-        Cliente cliente = new Cliente();
-        cliente.setIdCliente(rs.getLong("cliente_id"));
-
-        String categoriaStr = rs.getString("categoria");
-
-        if (categoriaStr != null && !categoriaStr.isEmpty()) {
-            cliente.setCategoria(Categoria.valueOf(categoriaStr));
-        } else {
-            throw new SQLException("Categoria não encontrada ou inválida.");
-        }
-
-        conta.setCliente(cliente);
-
-        return conta;
-    }
-
     // Método para buscar contas por cliente_id
     public List<Conta> buscarPorClienteId(Long clienteId) throws SQLException {
         List<Conta> contas = new ArrayList<>();
-        String sql = "SELECT * FROM conta WHERE cliente_id = ?";
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CLIENTE_CONTA_ID)) {
             stmt.setLong(1, clienteId);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                contas.add(mapearConta(rs));
+                contas.add(rowMapper.mapearconta(rs));
 
             }
         }
@@ -187,10 +154,8 @@ public class ContaDAO {
 
     // Método para atualizar o saldo da conta
     public void atualizarSaldo(Long idConta, double novoSaldo) throws SQLException {
-        String sql = "UPDATE conta SET saldo = ? WHERE id_conta = ?";
-
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_SALDO)) {
 
             stmt.setDouble(1, novoSaldo);
             stmt.setLong(2, idConta);
@@ -198,51 +163,10 @@ public class ContaDAO {
         }
     }
 
-    // Método auxiliar para mapear o ResultSet para a entidade Conta
-    private Conta mapearConta(ResultSet rs) throws SQLException {
-        TipoConta tipo = TipoConta.valueOf(rs.getString("tipo_conta"));
-        long clienteId = rs.getLong("cliente_id");
-
-        // Busca o cliente associada à conta
-        Optional<Cliente> optionalCliente = clienteDAO.findById(clienteId);
-
-        if (optionalCliente.isEmpty()) {
-            throw new RuntimeException("Cliente não encontrado com ID: " + clienteId);
-        }
-
-        Cliente cliente = optionalCliente.get();
-
-        // Verifica se o cliente não é nulo e se a categoria do cliente está presente
-        if (cliente == null) {
-            throw new RuntimeException("Cliente é nulo.");
-        }
-        if (cliente.getCategoria() == null) {
-            throw new RuntimeException("Categoria do cliente está nula.");
-        }
-
-        Conta conta;
-
-        // Mapeia a conta de acordo com o tipo
-        if (tipo == TipoConta.CORRENTE) {
-            conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
-        } else if (tipo == TipoConta.POUPANCA) {
-            conta = new ContaPoupanca(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
-        } else {
-            throw new RuntimeException("Tipo de conta desconhecido: " + tipo);
-        }
-
-        // Define os dados da conta
-        conta.setIdConta(rs.getLong("id_conta"));
-        double saldo = rs.getDouble("saldo");
-        conta.setSaldo(saldo);
-
-        // Retorna a conta com o cliente corretamente associado
-        return conta;
-    }
     public Conta atualizarConta(Conta conta) throws SQLException {
-        String sql = "UPDATE conta SET saldo = ?, agencia = ?, num_conta = ?, tipo_conta = ? WHERE id_conta = ?";
+
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_CONTA)) {
 
             stmt.setDouble(1, conta.getSaldo());
             stmt.setInt(2, conta.getAgencia());
@@ -260,10 +184,9 @@ public class ContaDAO {
     public List<Conta> findAll() {
 
         List<Conta> contas = new ArrayList<>();
-        String sql = "SELECT * FROM conta";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.LISTAR_CONTAS);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -278,7 +201,7 @@ public class ContaDAO {
                         conta = new ContaPoupanca();
                         break;
                     default:
-                        System.out.println("Tipo de conta desconhecido: " + tipoConta);
+
                         continue;
                 }
 
@@ -295,6 +218,5 @@ public class ContaDAO {
 
         return contas;
     }
-
 
 }

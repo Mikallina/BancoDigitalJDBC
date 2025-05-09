@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.sql.ContaSql;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -20,10 +21,9 @@ public class ContaPoupancaDAO {
 
 
     public void atualizarConta(ContaPoupanca conta) throws SQLException {
-        String sql = "UPDATE conta SET saldo = ? WHERE id_conta = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_CONTA_POUPANCA)) {
 
             stmt.setDouble(1, conta.getSaldo());
             stmt.setLong(2, conta.getIdConta());
