@@ -3,7 +3,9 @@ package br.com.meubancodigitaljdbc.service;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import org.springframework.stereotype.Service;
 
+@Service
 public class TaxaService {
 
     public double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC) {

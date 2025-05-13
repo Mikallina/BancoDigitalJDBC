@@ -1,6 +1,9 @@
 package br.com.meubancodigitaljdbc.model;
 
+import br.com.meubancodigitaljdbc.controller.CambioController;
 import br.com.meubancodigitaljdbc.enuns.TipoCartao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -16,8 +19,7 @@ public class CartaoCredito extends Cartao{
     protected String diaVencimento;
 
     private double limiteCredito;
-
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
 
     public CartaoCredito() {
     }
@@ -106,22 +108,22 @@ public class CartaoCredito extends Cartao{
 
     public void realizarPagamentos() {
         if (!verificarStatus()) {
-            System.out.println("Cartão de crédito desativado");
+           LOGGER.info("Cartão desativado");
             return;
         }
 
         if (novoCiclo()) {
             saldoMes = 0;
-            System.out.println("Novo ciclo iniciado...");
+            LOGGER.info("Novo ciclo iniciado...");
             dataCompra = LocalDate.now();
         }
 
         if (saldoMes + pagamento <= saldoCredito) {
             saldoMes += pagamento;
             saldoCredito -= pagamento + (pagamento * taxa);
-            System.out.println("Pagamento realizado com sucesso");
+            LOGGER.info("Pagamento realizado com sucesso");
         } else {
-            System.out.println("Limite de Crédito excedido");
+            LOGGER.warn("Limite de Crédito excedido");
         }
     }
 

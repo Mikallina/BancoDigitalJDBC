@@ -8,7 +8,6 @@ import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.sql.CartaoSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;

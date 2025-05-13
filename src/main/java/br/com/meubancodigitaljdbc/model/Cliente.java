@@ -21,7 +21,6 @@ public class Cliente {
     }
 
 
-
     public Cliente(String nome, String cpf, LocalDate dataNascimento, Endereco endereco, Categoria categoria) {
         this.nome = nome;
         this.cpf = cpf;
@@ -29,6 +28,19 @@ public class Cliente {
         this.endereco = endereco;
         this.categoria = categoria;
         this.contas = new ArrayList<Conta>();
+    }
+
+    public Cliente(Long idCliente, String nome, String cpf, LocalDate dataNascimento, String statusCpf,
+                   Endereco endereco, Categoria categoria, List<Conta> contas) {
+        super();
+        this.idCliente = idCliente;
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+        this.statusCpf = statusCpf;
+        this.endereco = endereco;
+        this.categoria = categoria;
+        this.contas = contas;
     }
 
 
@@ -81,9 +93,6 @@ public class Cliente {
         return categoria;
     }
 
-    public void setCateroria(Categoria categoria) {
-        this.categoria = categoria;
-    }
 
     public void setCategoria(Categoria categoria) {
         this.categoria = categoria;
@@ -106,25 +115,7 @@ public class Cliente {
         this.contas = contas;
     }
 
-    public String getStatusCpf() {
-        return statusCpf;
-    }
 
-    public void setStatusCpf(String statusCpf) {
-        this.statusCpf = statusCpf;
-    }
 
-    public Cliente(Long idCliente, String nome, String cpf, LocalDate dataNascimento, String statusCpf,
-                   Endereco endereco, Categoria categoria, List<Conta> contas) {
-        super();
-        this.idCliente = idCliente;
-        this.nome = nome;
-        this.cpf = cpf;
-        this.dataNascimento = dataNascimento;
-        this.statusCpf = statusCpf;
-        this.endereco = endereco;
-        this.categoria = categoria;
-        this.contas = contas;
-    }
 
 }

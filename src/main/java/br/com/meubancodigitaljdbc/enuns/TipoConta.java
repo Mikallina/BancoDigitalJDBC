@@ -11,9 +11,6 @@ public enum TipoConta {
 
     }
 
-    public Integer getCodigo() {
-        return codigo;
-    }
 
     public String getTipoAbreviado() {
         return this == CORRENTE ? "CC" : "CP";

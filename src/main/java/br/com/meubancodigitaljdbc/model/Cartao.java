@@ -8,7 +8,6 @@ public abstract class Cartao {
 
     private String numCartao;
 
-
     private Conta conta;
 
     private boolean status;
@@ -19,10 +18,10 @@ public abstract class Cartao {
 
     private double fatura;
 
-    public Cartao() {
+    protected Cartao() {
 
     }
-    public Cartao(String numCartao, Conta conta, TipoCartao tipoCartao, int senha, boolean status) {
+    protected Cartao(String numCartao, Conta conta, TipoCartao tipoCartao, int senha, boolean status) {
         super();
         this.numCartao = numCartao;
         this.conta = conta;
@@ -87,15 +86,7 @@ public abstract class Cartao {
         this.status = status;
     }
 
-    public void ativarCartao() {
-        this.status = true;
-    }
-
-    public void desativarCartao() {
-        this.status = false;
-    }
-
-    public boolean verificarStatus() {
+      public boolean verificarStatus() {
         return this.status;
     }
 

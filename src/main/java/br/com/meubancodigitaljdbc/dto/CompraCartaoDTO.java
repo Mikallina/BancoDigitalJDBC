@@ -1,22 +1,23 @@
 package br.com.meubancodigitaljdbc.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDate;
 
 
 public class CompraCartaoDTO { 
 	
 	private Long id;
+	@Schema(description = "Valor", example = "100.00")
 	private double valor;
+	@Schema(description = "Data da Compra", example = "13/05/2025")
 	private LocalDate dataCompra;
 	private String numCartao;
 	
 	public String getNumCartao() {
 		return numCartao;
 	}
-	public void setNumeroCartao(String numCartao) {
-		this.numCartao = numCartao;
-	}
-	
+
 	public Long getId() {
 		return id;
 	}
@@ -32,9 +33,7 @@ public class CompraCartaoDTO {
 	public LocalDate getDataCompra() {
 		return dataCompra;
 	}
-	public void setDataCompra(LocalDate dataCompra) {
-		this.dataCompra = dataCompra;
-	}
+
 	public CompraCartaoDTO(Long id, double valor, LocalDate dataCompra, String numCartao) {
 		super();
 		this.id = id;

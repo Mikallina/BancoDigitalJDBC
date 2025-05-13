@@ -1,10 +1,14 @@
 package br.com.meubancodigitaljdbc.dto;
 
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class TransferenciaDTO {
     private Long id;
     private String chave;
+	@Schema(description = "Numero Conta Destino", example = "XXXXXXXXXXX")
     private String numContaDestino;
+	@Schema(description = "Numero Conta Origem", example = "XXXXXXXXXXX")
     private String numContaOrigem;
     private Long idConta;
     private double valor;
@@ -29,18 +33,6 @@ public class TransferenciaDTO {
 		return numContaOrigem;
 	}
 
-	public void setNumContaOrigem(String numContaOrigem) {
-		this.numContaOrigem = numContaOrigem;
-	}
-
-	public Long getIdConta() {
-		return idConta;
-	}
-
-	public void setIdConta(Long idConta) {
-		this.idConta = idConta;
-	}
-
 	public Long getId() {
 		return id;
 	}
@@ -51,14 +43,8 @@ public class TransferenciaDTO {
 	public String getChave() {
 		return chave;
 	}
-	public void setChave(String chave) {
-		this.chave = chave;
-	}
 	public String getNumContaDestino() {
 		return numContaDestino;
-	}
-	public void setNumContaDestino(String numContaDestino) {
-		this.numContaDestino = numContaDestino;
 	}
 	public double getValor() {
 		return valor;

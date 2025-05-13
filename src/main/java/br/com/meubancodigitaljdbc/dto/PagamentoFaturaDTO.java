@@ -12,9 +12,7 @@ public class PagamentoFaturaDTO {
 	public String getNumCartao() {
 		return numCartao;
 	}
-	public void setNumCartao(String numCartao) {
-		this.numCartao = numCartao;
-	}
+
 	public double getValor() {
 		return valor;
 	}

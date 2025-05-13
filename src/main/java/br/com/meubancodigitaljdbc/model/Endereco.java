@@ -8,7 +8,6 @@ package br.com.meubancodigitaljdbc.model;
         public void setLocalidade(String localidade) {
             this.localidade = localidade;
         }
-
         private String cep;
         private String bairro;
         private String localidade;
@@ -65,10 +64,6 @@ package br.com.meubancodigitaljdbc.model;
             return localidade;
         }
 
-        public void setCidade(String localidade) {
-            this.localidade = localidade;
-        }
-
         public String getUf() {
             return uf;
         }
@@ -81,11 +76,4 @@ package br.com.meubancodigitaljdbc.model;
             return complemento;
         }
 
-        public String getComplemento() {
-            return complemento;
-        }
-
-        public void setComplemento(String complemento) {
-            this.complemento = complemento;
-        }
 }

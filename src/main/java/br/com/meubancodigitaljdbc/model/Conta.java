@@ -13,12 +13,8 @@ public abstract class Conta {
     public void setCartoes(List<Cartao> cartoes) {
         this.cartoes = cartoes;
     }
-
     protected Cliente cliente;
-
-
     protected Long idConta;
-
     protected int agencia;
     protected String numConta;
     protected double saldo;
@@ -34,6 +30,18 @@ public abstract class Conta {
         this.agencia = agencia;
         this.numConta = numConta;
         this.saldo = 0;
+    }
+
+    public Conta(Cliente cliente, Long idConta, int agencia, String numConta, double saldo, TipoConta tipoConta,
+                 List<Cartao> cartoes) {
+        super();
+        this.cliente = cliente;
+        this.idConta = idConta;
+        this.agencia = agencia;
+        this.numConta = numConta;
+        this.saldo = saldo;
+        this.tipoConta = tipoConta;
+        this.cartoes = cartoes;
     }
 
 
@@ -85,30 +93,5 @@ public abstract class Conta {
         this.tipoConta = tipoConta;
     }
 
-    public void depositar(double valor) {
-        if (valor > 0) {
-            this.saldo += valor;
-        } else {
-            System.out.println("Valor de depósito inválido.");
-        }
-    }
 
-    // Métodos abstratos que serão implementados nas subclasses
-    public abstract void exibirSaldo();
-
-    protected abstract double getSaldoTotal();
-
-    protected abstract Conta[] values();
-
-    public Conta(Cliente cliente, Long idConta, int agencia, String numConta, double saldo, TipoConta tipoConta,
-                 List<Cartao> cartoes) {
-        super();
-        this.cliente = cliente;
-        this.idConta = idConta;
-        this.agencia = agencia;
-        this.numConta = numConta;
-        this.saldo = saldo;
-        this.tipoConta = tipoConta;
-        this.cartoes = cartoes;
-    }
 }

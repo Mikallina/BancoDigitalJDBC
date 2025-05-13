@@ -21,20 +21,8 @@ public class LimiteDTO {
 		this.id = id;
 	}
 
-	public double getLimite() {
-		return limite;
-	}
-
-	public void setLimite(double limite) {
-		this.limite = limite;
-	}
-
 	public double getNovoLimite() {
 		return novoLimite;
-	}
-
-	public void setNovoLimite(double novoLimite) {
-		this.novoLimite = novoLimite;
 	}
 
 }
