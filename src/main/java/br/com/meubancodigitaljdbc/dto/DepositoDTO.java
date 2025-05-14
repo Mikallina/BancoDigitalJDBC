@@ -1,30 +1,30 @@
- 
+
 package br.com.meubancodigitaljdbc.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class DepositoDTO {
-	
-	private Long id;
-    private double valor;
-    @JsonProperty("numContaDestino")
-    private String numConta;
-    
 
-	public String getNumConta() {
-		return numConta;
+	private String cpf;
+	@Schema(description = "Valor a ser depositado", example = "250.00")
+	private double valor;
+	@Schema(description = "Número da conta destino", example = "CC-1234-xxxxxxxx")
+	private String numContaDestino;
+
+
+	public String getNumContaDestino() {
+		return numContaDestino;
 	}
 
-	public void setNumConta(String numConta) {
-		this.numConta = numConta;
+
+
+	public String getCpf() {
+		return cpf;
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
 	}
 
 	public double getValor() {
@@ -34,13 +34,13 @@ public class DepositoDTO {
 		this.valor = valor;
 	}
 
-	public DepositoDTO(Long id, double valor, String numConta) {
+	public DepositoDTO(String cpf, double valor, String numContaDestino) {
 		super();
-		this.id = id;
+		this.cpf = cpf;
 		this.valor = valor;
-		this.numConta = numConta;
+		this.numContaDestino = numContaDestino;
 	}
-    
-    
+
+
 
 }

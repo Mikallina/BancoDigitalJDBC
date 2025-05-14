@@ -1,20 +1,20 @@
 package br.com.meubancodigitaljdbc.dto;
 
-import br.com.cdb.MeuBancoDigitalCompleto.entity.Conta;
+
+import br.com.meubancodigitaljdbc.model.Conta;
 
 public class ContaResponseDTO {
-	
+
 	private String nome;
-    private String cpf;
-    private Conta conta;
+	private String cpf;
+	private Conta conta;
 
-    // Construtores, getters e setters
 
-    public ContaResponseDTO(String nome, String cpf, Conta conta) {
-        this.nome = nome;
-        this.cpf = cpf;
-        this.conta = conta;
-    }
+	public ContaResponseDTO(String nome, String cpf, Conta conta) {
+		this.nome = nome;
+		this.cpf = cpf;
+		this.conta = conta;
+	}
 
 	public String getNome() {
 		return nome;
@@ -40,6 +40,6 @@ public class ContaResponseDTO {
 		this.conta = conta;
 	}
 
-    
-    
+
+
 }
