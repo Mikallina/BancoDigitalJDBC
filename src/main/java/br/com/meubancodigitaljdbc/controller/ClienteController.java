@@ -27,10 +27,12 @@ import java.util.Optional;
 public class ClienteController {
 
     private final ClienteService clienteService;
+
     @Autowired
     public ClienteController(ClienteService clienteService) {
         this.clienteService = clienteService;
     }
+
     private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteController.class);
@@ -49,7 +51,7 @@ public class ClienteController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = Cliente.class))
             )
-           Cliente cliente,
+            Cliente cliente,
             HttpServletRequest request
     ) throws Exception {
         long tempoInicio = System.currentTimeMillis();
@@ -73,7 +75,6 @@ public class ClienteController {
                     content = @Content(schema = @Schema(implementation = Cliente.class))),
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
     })
-
     @GetMapping("/buscarCpf/{cpf}")
     public ResponseEntity<Cliente> buscarClientePorCpf(
             @Parameter(description = "CPF do cliente a ser buscado", required = true, example = "12345678900")
@@ -166,7 +167,6 @@ public class ClienteController {
 
         return clienteExistente;
     }
-
 
 
     @Operation(
