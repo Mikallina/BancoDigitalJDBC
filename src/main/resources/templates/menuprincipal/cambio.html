@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversor de Moedas</title>
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1>Conversor de Moedas</h1>
+
+    <div class="form-group">
+        <label for="moedaBase">Moeda de Origem</label> <select id="moedaBase"
+                                                               class="form-control">
+        <!-- As opções de moedas serão inseridas aqui via JavaScript -->
+    </select>
+    </div>
+
+    <div class="form-group">
+        <label for="moedaDestino">Moeda de Destino</label> <select
+            id="moedaDestino" class="form-control">
+        <!-- As opções de moedas serão inseridas aqui via JavaScript -->
+    </select>
+    </div>
+    <div class="form-group">
+        <label for="valor">Valor a converter</label> <input type="number"
+                                                            id="valor" class="form-control" placeholder="Digite o valor">
+    </div>
+
+    <button class="btn btn-primary" onclick="converterMoeda()">Converter</button>
+
+    <div id="resultado" class="mt-4 alert alert-info font-weight-bold text-center" style="font-size: 1.5rem;"></div>
+
+    <button type="button" class="btn btn-secondary"
+            onclick="window.history.back()">Voltar</button>
+</div>
+
+
+
+<script>
+        // Função para carregar as moedas dinamicamente
+        function carregarMoedas() {
+            fetch('http://localhost:8080/cambio/moedas')
+                .then(response => response.json())
+                .then(moedas => {
+                    const moedaBaseSelect = document.getElementById("moedaBase");
+                    const moedaDestinoSelect = document.getElementById("moedaDestino");
+
+                    // Limpa os selects
+                    moedaBaseSelect.innerHTML = '';
+                    moedaDestinoSelect.innerHTML = '';
+
+                    // Adiciona as moedas no select
+                    for (let moeda in moedas) {
+                        const option = document.createElement('option');
+                        option.value = moeda;
+                        option.text = moeda + " - " + moedas[moeda];
+                        moedaBaseSelect.appendChild(option);
+                        moedaDestinoSelect.appendChild(option.cloneNode(true)); // Para o destino
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar moedas:", error);
+                    alert("Erro ao carregar as moedas.");
+                });
+        }
+
+        // Função para converter a moeda
+       function converterMoeda() {
+		    const moedaBase = document.getElementById("moedaBase").value;
+		    const moedaDestino = document.getElementById("moedaDestino").value;
+		    const valor = document.getElementById("valor").value;
+
+		    fetch(`http://localhost:8080/cambio/converter?valor=${valor}&moedaBase=${moedaBase}&moedaDestino=${moedaDestino}`)
+		        .then(response => response.text())
+		        .then(data => {
+		            document.getElementById("resultado").innerText =  data;
+		        })
+		        .catch(error => {
+		            console.error("Erro na conversão:", error);
+		            alert("Erro ao converter moeda.");
+		        });
+		}
+
+        // Carrega as moedas ao carregar a página
+        window.onload = carregarMoedas;
+    </script>
+</body>
+</html>

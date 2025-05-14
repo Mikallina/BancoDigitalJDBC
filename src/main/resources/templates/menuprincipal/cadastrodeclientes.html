@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Cadastro de Clientes</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<style>
+body {
+	background-color: #f8f9fa;
+	padding-top: 30px;
+}
+
+.card {
+	margin-bottom: 20px;
+}
+
+.section-title {
+	border-bottom: 2px solid #007bff;
+	padding-bottom: 5px;
+	margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+
+	<div class="container">
+		<h2 class="text-center text-primary mb-4">Cadastro de Clientes</h2>
+
+		<form onsubmit="event.preventDefault(); enviarCadastro();">
+			<div class="card p-4">
+				<h5 class="section-title">Informações Pessoais</h5>
+				<div class="form-row">
+					<div class="form-group col-md-6">
+						<label for="inputNome">Nome</label> <input type="text"
+							class="form-control" id="inputNome"
+							placeholder="Digite o nome completo">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputCpf">CPF</label> <input type="text"
+							class="form-control" id="inputCpf" placeholder="Digite o CPF">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputData">Data de Nascimento</label> <input
+							type="date" class="form-control" id="inputData">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputCategoria">Categoria</label> <select
+							id="inputCategoria" class="form-control">
+							<option selected disabled>Selecione</option>
+							<option>COMUM</option>
+							<option>SUPER</option>
+							<option>PREMIUM</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="card p-4">
+				<h5 class="section-title">Endereço</h5>
+				<div class="form-row align-items-end">
+					<div class="form-group col-md-6">
+						<label for="inputCEP">CEP</label> <input type="text"
+							class="form-control" id="inputCEP" placeholder="Digite o CEP">
+					</div>
+					<div class="form-group col-md-6">
+						<button type="button" class="btn btn-secondary btn-block"
+							onclick="buscarEndereco()">Buscar Endereço</button>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group col-md-8">
+						<label for="inputEndereco">Endereço</label> <input type="text"
+							class="form-control" id="inputEndereco" readonly
+							placeholder="Rua dos Bobos, nº 0">
+					</div>
+					<div class="form-group col-md-4">
+						<label for="inputNumero">Número</label> <input type="text"
+							class="form-control" id="inputNumero" placeholder="Número">
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group col-md-6">
+						<label for="inputBairro">Bairro</label> <input type="text"
+							class="form-control" id="inputBairro" placeholder="Bairro">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputComplemento">Complemento</label> <input
+							type="text" class="form-control" id="inputComplemento"
+							placeholder="Apartamento, casa, etc.">
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group col-md-8">
+						<label for="inputLocalidade">Cidade</label> <input type="text"
+							class="form-control" id="inputLocalidade" readonly>
+					</div>
+					<div class="form-group col-md-4">
+						<label for="inputUf">Estado</label> <input type="text"
+							class="form-control" id="inputUf" readonly>
+					</div>
+				</div>
+			</div>
+
+			<div class="text-center">
+				<button type="submit" class="btn btn-primary mr-2">Cadastrar</button>
+				<button type="button" class="btn btn-outline-secondary"
+					onclick="window.history.back()">Voltar</button>
+			</div>
+		</form>
+	</div>
+	<script>
+function buscarEndereco() {
+    var cep = document.getElementById("inputCEP").value;
+    if (cep.length === 8) { 
+        fetch(`http://localhost:8080/buscar-endereco/${cep}`)
+            .then(response => response.json())
+            .then(data => {
+            	console.log(data);
+                if (data) {
+                    document.getElementById("inputEndereco").value = data.logradouro;
+                    document.getElementById("inputLocalidade").value = data.localidade;
+                    document.getElementById("inputUf").value = data.uf;
+                    document.getElementById("inputBairro").value = data.bairro;
+                } else {
+                    alert("CEP não encontrado!");
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao buscar endereço:", error);
+            });
+    } else {
+        alert("CEP inválido.");
+    }
+}
+
+
+
+
+function enviarCadastro() {
+    var cliente = {
+        nome: document.getElementById("inputNome").value,
+        cpf: document.getElementById("inputCpf").value,
+        dataNascimento: document.getElementById("inputData").value,
+        categoria: document.getElementById("inputCategoria").value,
+        endereco: {
+            logradouro: document.getElementById("inputEndereco").value,
+            numero: document.getElementById("inputNumero").value,
+            bairro: document.getElementById("inputBairro").value,
+            localidade: document.getElementById("inputLocalidade").value,
+            complemento: document.getElementById("inputComplemento").value,
+            uf: document.getElementById("inputUf").value,
+            cep: document.getElementById("inputCEP").value
+        }
+    };
+
+    if (!validarFormulario()) {
+        return;
+    }
+    fetch('http://localhost:8080/cliente/adicionar-cliente', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cliente)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Cliente cadastrado com sucesso!");
+        } else {
+            // Verifique se o erro é referente ao CPF já cadastrado
+            return response.text().then(text => {
+                if (text.includes("CPF já Cadastrado")) {
+                    alert("CPF já cadastrado");
+                } else {
+                    alert("Erro ao cadastrar cliente: " + text);
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error("Erro ao cadastrar cliente:", error);
+    });
+}
+
+		function validarIdade() {
+		    const dataNascimento = document.getElementById('inputData').value;  // Pega a data de nascimento do campo de entrada
+		    const dataNascimentoFormatada = new Date(dataNascimento);
+		    
+		    // Verifica se a data de nascimento é válida
+		    if (isNaN(dataNascimentoFormatada.getTime())) {
+		        alert("Data de nascimento inválida. O formato deve ser dd/MM/yyyy.");
+		        return false;
+		    }
+		
+		    // Calcula a idade
+		    const hoje = new Date();
+		    let idade = hoje.getFullYear() - dataNascimentoFormatada.getFullYear();
+		    const mes = hoje.getMonth() - dataNascimentoFormatada.getMonth();
+		    if (mes < 0 || (mes === 0 && hoje.getDate() < dataNascimentoFormatada.getDate())) {
+		        idade--;
+		    }
+		
+		    // Verifica se o cliente tem ao menos 18 anos
+		    if (idade < 18) {
+		        alert("O cliente deve ter ao menos 18 anos.");
+		        return false;
+		    }
+		    
+		    // Se a idade for válida
+		    return true;
+		}
+		function validarFormulario() {
+		    var nome = document.getElementById("inputNome").value;
+		    var cpf = document.getElementById("inputCpf").value;
+		
+		    if (nome.length < 2 || nome.length > 100) {
+		        alert("O nome deve ter entre 2 e 100 caracteres.");
+		        return false;
+		    }
+		
+		    if (!validarCpf(cpf)) {
+		        alert("CPF inválido.");
+		        return false;
+		    }
+		    
+			if(!validarIdade()) {
+				return false;
+			}
+		
+		    return true;
+		}
+		
+		function validarCpf(cpf) {
+		    // Remove qualquer caractere não numérico (como pontos e hífens)
+		    cpf = cpf.replace(/[^\d]+/g, '');
+		
+		    // Verifica se o CPF tem exatamente 11 dígitos
+		    if (cpf.length !== 11 || /^[0-9]+$/.test(cpf) === false) {
+		        return false;
+		    }
+		
+		    // Validação do CPF com base nos dois dígitos verificadores
+		    let soma = 0;
+		    let resto;
+		
+		    // Primeiro dígito verificador
+		    for (let i = 1; i <= 9; i++) {
+		        soma += parseInt(cpf.charAt(i - 1)) * (11 - i);
+		    }
+		    resto = (soma * 10) % 11;
+		    if (resto === 10 || resto === 11) {
+		        resto = 0;
+		    }
+		    if (resto !== parseInt(cpf.charAt(9))) {
+		        return false;
+		    }
+		
+		    soma = 0;
+		    // Segundo dígito verificador
+		    for (let i = 1; i <= 10; i++) {
+		        soma += parseInt(cpf.charAt(i - 1)) * (12 - i);
+		    }
+		    resto = (soma * 10) % 11;
+		    if (resto === 10 || resto === 11) {
+		        resto = 0;
+		    }
+		    if (resto !== parseInt(cpf.charAt(10))) {
+		        return false;
+		    }
+		
+		    return true;
+		}
+
+
+</script>
+
+</body>
+</html>
