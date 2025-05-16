@@ -86,7 +86,7 @@ public class CartaoController {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar a senha do cartão
-        boolean sucesso = cartaoService.alterarSenha(dto.getSenhaAntiga(), dto.getSenhaNova(), numCartao);
+        boolean sucesso = cartaoService.alterarSenhaCartao(numCartao, dto.getSenhaAntiga(), dto.getSenhaNova());
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
@@ -138,7 +138,7 @@ public class CartaoController {
     })
     @PutMapping("/alterar-status/{numCartao}")
     public ResponseEntity<Boolean> alterarStatusCartao(@PathVariable String numCartao,
-                                                       @RequestBody AlterarStatusDTO dto, HttpServletRequest request) throws CartaoNaoEncontradoException, SQLException, CartaoNuloException {
+                                                       @RequestBody AlterarStatusDTO dto, HttpServletRequest request) throws CartaoNaoEncontradoException, SQLException, CartaoNuloException, CartaoStatusException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar o status do cartão
@@ -165,7 +165,7 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno ao alterar limite")
     })
     @PutMapping("/alterar-limite/{numCartao}")
-    public ResponseEntity<Boolean> alterarLimite(@PathVariable String numCartao, @RequestBody LimiteDTO limiteDTO, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException {
+    public ResponseEntity<Boolean> alterarLimite(@PathVariable String numCartao, @RequestBody LimiteDTO limiteDTO, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar o limite do cartão

@@ -127,6 +127,20 @@ public class CartaoCredito extends Cartao{
         }
     }
 
+    public boolean realizarCompra(double valor, LocalDate data) {
+        if (valor <= 0 || valor > this.limiteCredito) {
+            return false;
+        }
+
+        this.saldoMes += valor;
+        this.saldoCredito = this.limiteCredito - valor;
+        this.pagamento += valor;
+        this.dataCompra = data;
+
+        return true;
+    }
+
+
     public boolean pagarFatura(double valorPagamento) {
         if (valorPagamento <= 0 || valorPagamento > this.saldoMes) {
             return false;

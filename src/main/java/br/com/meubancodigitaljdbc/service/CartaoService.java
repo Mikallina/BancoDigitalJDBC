@@ -10,9 +10,12 @@ import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.utils.CartaoUtils;
+import br.com.meubancodigitaljdbc.utils.CategoriaLimiteUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -52,7 +55,9 @@ public class CartaoService {
         }
     }
 
-    public Cartao criarCartao(String contaC, TipoCartao tipoCartao, int senha, String diaVencimento) throws SQLException {
+    public Cartao criarCartao(String contaC, TipoCartao tipoCartao, int senha, String diaVencimento)
+            throws SQLException {
+
         Conta conta = contaService.buscarContas(contaC);
 
         if (conta == null) {
@@ -60,42 +65,14 @@ public class CartaoService {
         }
 
         LOGGER.info("Iniciando criação de cartão. Conta: {}, Tipo: {}", contaC, tipoCartao);
-        LocalDate dataVencimento = null;
-        if (tipoCartao == TipoCartao.CREDITO) {
-            if (diaVencimento == null) {
-                throw new IllegalArgumentException("Erro: O dia de vencimento é obrigatório para cartões de crédito.");
-            }
-            int dia = Integer.parseInt(diaVencimento);
-            LocalDate dataAtual = LocalDate.now();
-            int anoAtual = dataAtual.getYear();
-            int mesAtual = dataAtual.getMonthValue();
 
-            try {
-                dataVencimento = LocalDate.of(anoAtual, mesAtual, dia);
-            } catch (DateTimeException e) {
-                throw new IllegalArgumentException("Erro: Dia de vencimento inválido.");
-            }
-
-            if (dataVencimento.isBefore(dataAtual)) {
-                if (mesAtual == 12) {
-                    dataVencimento = LocalDate.of(anoAtual + 1, 1, dia);
-                } else {
-                    dataVencimento = LocalDate.of(anoAtual, mesAtual + 1, dia);
-                }
-            }
-        }
-
-
-        Cartao cartao;
         String numCartao = gerarNumeroCartao();
+        Cartao cartao;
 
         if (tipoCartao == TipoCartao.CREDITO) {
-            cartao = new CartaoCredito(conta, senha, numCartao, TipoCartao.CREDITO,
-                    limiteDeCredito(conta), diaVencimento, dataVencimento);
-            LOGGER.debug("Data de vencimento definida para o cartão de crédito: {}", dataVencimento);
+            cartao = criarCartaoCredito(conta, senha, numCartao, diaVencimento);
         } else if (tipoCartao == TipoCartao.DEBITO) {
-            cartao = new CartaoDebito(conta, numCartao, TipoCartao.DEBITO,
-                    senha, limiteDiario(conta));
+            cartao = criarCartaoDebito(conta, senha, numCartao);
         } else {
             throw new IllegalArgumentException("Tipo de cartão inválido.");
         }
@@ -104,105 +81,133 @@ public class CartaoService {
         return cartaoDAO.save(cartao);
     }
 
-    public boolean alterarSenha(int senhaAntiga, int senhaNova, String numCartao)
-            throws CartaoStatusException, CartaoNuloException, SQLException {
 
-        Cartao cartao = buscarCartaoPorCliente(numCartao);
-        LOGGER.info("Tentativa de alterar senha para cartão {}", numCartao);
+    private Cartao criarCartaoCredito(Conta conta, int senha, String numCartao, String diaVencimento) {
+        double limiteCredito = CategoriaLimiteUtils.limiteCredito(conta.getCliente().getCategoria());
+        LocalDate dataVencimento = calcularDataVencimento(diaVencimento);
 
-        if (cartao == null) {
-            throw new CartaoNuloException("Cartão não pode ser nulo");
+        return new CartaoCredito(
+                conta,
+                senha,
+                numCartao,
+                TipoCartao.CREDITO,
+                limiteCredito,
+                diaVencimento,
+                dataVencimento
+        );
+    }
+
+    private Cartao criarCartaoDebito(Conta conta, int senha, String numCartao) {
+        double limiteDiario = CategoriaLimiteUtils.limiteDiario(conta.getCliente().getCategoria());
+
+        return new CartaoDebito(
+                conta,
+                numCartao,
+                TipoCartao.DEBITO,
+                senha,
+                limiteDiario
+        );
+    }
+
+
+    private LocalDate calcularDataVencimento(String diaVencimento) {
+        if (diaVencimento == null) {
+            throw new IllegalArgumentException("Erro: O dia de vencimento é obrigatório para cartões de crédito.");
         }
 
-        if (!cartao.isStatus()) {
-            throw new CartaoStatusException("Status do Cartão Desativado");
+        int dia = Integer.parseInt(diaVencimento);
+        LocalDate hoje = LocalDate.now();
+
+        try {
+            LocalDate data = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), dia);
+            if (data.isBefore(hoje)) {
+                return data.plusMonths(1);
+            }
+            return data;
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException("Erro: Dia de vencimento inválido.");
+        }
+    }
+
+
+
+    public boolean alterarLimiteCartao(String numCartao, double novoLimite)
+            throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException {
+
+        Cartao cartao = validarCartao(numCartao, true);
+
+        if (cartao instanceof CartaoCredito cartaoCredito) {
+            cartaoCredito.alterarLimiteCredito(novoLimite);
+        } else if (cartao instanceof CartaoDebito cartaoDebito) {
+            cartaoDebito.alterarLimiteDebito(novoLimite);
+        } else {
+            throw new RegraNegocioException("Tipo de cartão não suportado para alteração de limite");
         }
 
-        if (cartao.getSenha() != senhaAntiga) {
-            LOGGER.warn("Senha antiga incorreta para o cartão {}", numCartao);
-            return false;
+        boolean sucesso = cartaoDAO.alterarLimiteCartao(numCartao, novoLimite);
+
+        if (sucesso) {
+            LOGGER.info("Limite alterado com sucesso para cartão {}: {}", numCartao, novoLimite);
+        } else {
+            LOGGER.warn("Falha ao alterar limite do cartão {}", numCartao);
         }
 
-        cartao.setSenha(senhaNova);
-        LOGGER.info("Senha alterada com sucesso para cartão {}", numCartao);
-        salvarCartao(cartao, true);
+        return sucesso;
+    }
+
+
+
+    public boolean alterarStatus(String numCartao, boolean novoStatus)
+            throws SQLException, CartaoStatusException, CartaoNuloException {
+
+        validarCartao(numCartao, false);
+
+        boolean sucesso = cartaoDAO.alterarStatusCartao(numCartao, novoStatus);
+
+        if (sucesso) {
+            LOGGER.info("Status alterado com sucesso para cartão {}: {}", numCartao, novoStatus);
+        } else {
+            LOGGER.warn("Falha ao alterar status do cartão {}", numCartao);
+        }
+
+        return sucesso;
+    }
+
+
+
+    public boolean alterarSenhaCartao(String numCartao, int senhaAntiga, int novaSenha)
+            throws SQLException, CartaoStatusException, CartaoNuloException {
+
+        validarCartao(numCartao, true);
+
+        boolean sucesso = cartaoDAO.alterarSenhaCartao(numCartao, senhaAntiga, novaSenha);
+
+        if (!sucesso) {
+            throw new SQLException("Senha antiga incorreta");
+        }
+
         return true;
     }
 
 
-    public boolean alterarLimiteCartao(String numCartao, double novoLimite) throws CartaoStatusException, SQLException, CartaoNuloException {
+    private Cartao validarCartao(String numCartao, boolean checarStatusAtivo)
+            throws CartaoNuloException, CartaoStatusException, SQLException {
+
         Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
-        LOGGER.info("Tentando alterar limite do cartão {} para {}", numCartao, novoLimite);
-
-        if (cartaoOptional.isPresent()) {
-            Cartao cartao = cartaoOptional.get();
-
-            if (!cartao.isStatus()) {
-                LOGGER.warn("Cartão {} está inativo. Alteração de limite não permitida.", numCartao);
-                throw new CartaoStatusException("Status do Cartão Desativado");
-            }
-
-            if (cartao instanceof CartaoCredito cartaoCredito) {
-                cartaoCredito.alterarLimiteCredito(novoLimite);
-                salvarCartao(cartao, true);
-
-                return true;
-            } else if (cartao instanceof CartaoDebito cartaoDebito) {
-                cartaoDebito.alterarLimiteDebito(novoLimite);
-                salvarCartao(cartao, true);
-                LOGGER.info("Limite alterado com sucesso para cartão {}", numCartao);
-                return true;
-            }
+        if (cartaoOptional.isEmpty()) {
+            throw new CartaoNuloException("Cartão não encontrado");
         }
 
-        return false;
+        Cartao cartao = cartaoOptional.get();
+
+        if (checarStatusAtivo && !cartao.isStatus()) {
+            throw new CartaoStatusException("Cartão inativo.");
+        }
+
+        return cartao;
     }
 
-    public boolean alterarStatus(String numCartao, boolean novoStatus) throws CartaoNaoEncontradoException, SQLException, CartaoNuloException {
-        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
-        if (cartaoOptional.isPresent()) {
-            Cartao cartao = cartaoOptional.get();
-            cartao.setStatus(novoStatus);
-            salvarCartao(cartao, true);
-            return true;
-        } else {
-            throw new CartaoNaoEncontradoException("Cartão não encontrado com o ID fornecido.");
-        }
-    }
 
-    private double limiteDeCredito(Conta conta) {
-        Categoria categoria = conta.getCliente().getCategoria();
-        switch (categoria) {
-            case COMUM -> {
-                return 1000.00;
-            }
-            case SUPER -> {
-                return 5000.00;
-            }
-            case PREMIUM -> {
-                return 10000.00;
-            }
-            default ->
-                    throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
-        }
-    }
-
-    private double limiteDiario(Conta conta) {
-        Categoria categoria = conta.getCliente().getCategoria();
-        switch (categoria) {
-            case COMUM -> {
-                return 500.00;
-            }
-            case SUPER -> {
-                return 1000.00;
-            }
-            case PREMIUM -> {
-                return 5000.00;
-            }
-            default ->
-                    throw new IllegalArgumentException("Categoria de Cliente desconhecida" + conta.getCliente().getCategoria());
-        }
-    }
 
 
     public String gerarNumeroCartao() {
@@ -214,62 +219,47 @@ public class CartaoService {
 
 
     public boolean realizarCompra(CompraCartaoDTO dto)
-            throws CartaoNaoEncontradoException, CartaoStatusException, SQLException, CartaoNuloException {
+            throws CartaoStatusException, SQLException, CartaoNuloException {
+
         LOGGER.info("Processando compra de {} no cartão {}", dto.getValor(), dto.getNumCartao());
 
         if (dto.getValor() <= 0) {
             return false;
         }
 
-        Cartao cartao = cartaoDAO.buscarPorNumero(dto.getNumCartao());
+        Cartao cartao = validarCartao(dto.getNumCartao(), true);
 
-        if (cartao == null) {
-            throw new CartaoNaoEncontradoException("Cartão não encontrado");
-        }
-
-        if (!cartao.isStatus()) {
-            throw new CartaoStatusException("Status do cartão desativado");
-        }
-
-        if (!(cartao instanceof CartaoCredito)) {
+        if (!(cartao instanceof CartaoCredito cartaoCredito)) {
+            LOGGER.warn("Cartão {} não é de crédito. Compra não permitida.", dto.getNumCartao());
             return false;
         }
 
-        CartaoCredito cartaoCredito = (CartaoCredito) cartao;
+        boolean sucesso = cartaoCredito.realizarCompra(dto.getValor(), dto.getDataCompra());
 
-        if (cartaoCredito.getLimiteCredito() <= dto.getValor()) {
+        if (!sucesso) {
+            LOGGER.warn("Compra negada: limite insuficiente para cartão {}", dto.getNumCartao());
             return false;
         }
-
-        cartaoCredito.setSaldoMes(cartaoCredito.getSaldoMes() + dto.getValor());
-        cartaoCredito.setSaldoCredito(cartaoCredito.getLimiteCredito() - dto.getValor());
-        cartaoCredito.setPagamento(cartaoCredito.getPagamento() + dto.getValor());
-        cartaoCredito.setDataCompra(dto.getDataCompra());
-
-        LOGGER.info("Compra realizada com sucesso no cartão {}. Novo saldo: {}", dto.getNumCartao(), cartaoCredito.getSaldoMes());
 
         salvarCartao(cartaoCredito, true);
+        LOGGER.info("Compra realizada com sucesso no cartão {}. Novo saldo: {}", dto.getNumCartao(), cartaoCredito.getSaldoMes());
         return true;
     }
+
 
 
     public void realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
         Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
         LOGGER.info("Iniciando pagamento de fatura. Cartão: {}, Valor: {}", numCartao, valorPagamento);
 
+        validarCartao(numCartao, true);
+
         if (!(cartao instanceof CartaoCredito cartaoCredito)) {
             throw new CartaoFaturaException("Cartão de crédito não encontrado ou tipo de cartão inválido.");
         }
 
-        if (!cartao.isStatus()) {
-            throw new CartaoStatusException("Status do Cartão Desativado");
-        }
-
         Conta conta = cartaoCredito.getConta();
 
-        if (conta == null) {
-            throw new CartaoFaturaException("Conta associada ao cartão não encontrada.");
-        }
 
         if (valorPagamento <= 0 || valorPagamento > cartaoCredito.getSaldoMes()) {
             throw new CartaoFaturaException("Valor do pagamento inválido.");

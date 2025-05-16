@@ -170,5 +170,50 @@ public class CartaoDAO {
     }
 
 
+    public boolean alterarStatusCartao(String numCartao, boolean status) throws SQLException{
+        String sql = "{CALL alterar_status_cartao(?,?)}";
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setString(1,numCartao);
+            stmt.setBoolean(2, status);
+
+            int resultado = stmt.executeUpdate();
+            return resultado > 0;
+        }
+    }
+
+    public boolean alterarSenhaCartao(String numCartao, int senhaAntiga, int novaSenha) throws SQLException {
+        String sql = "{CALL alterar_senha_cartao(?, ?, ?, ?)}";
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall(sql)) {
+
+            stmt.setString(1, numCartao);
+            stmt.setInt(2, senhaAntiga);
+            stmt.setInt(3, novaSenha);
+            stmt.registerOutParameter(4, Types.BOOLEAN);
+
+            stmt.execute();
+
+            return stmt.getBoolean(4);
+        }
+    }
+
+    public boolean alterarLimiteCartao(String numCartao, double novoLimite) throws SQLException {
+        String sql = "{CALL alterar_limite_cartao(?, ?, ?)}";
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall(sql)) {
+
+            stmt.setString(1, numCartao);
+            stmt.setDouble(2, novoLimite);
+            stmt.registerOutParameter(3, Types.BOOLEAN);
+
+            stmt.execute();
+
+            return stmt.getBoolean(3);
+        }
+    }
 }
 
