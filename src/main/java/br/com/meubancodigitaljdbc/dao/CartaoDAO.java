@@ -5,9 +5,9 @@ import br.com.meubancodigitaljdbc.model.Cartao;
 import br.com.meubancodigitaljdbc.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.model.Conta;
-import br.com.meubancodigitaljdbc.sql.CartaoSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,8 +27,6 @@ public class CartaoDAO {
     }
 
 
-
-
     public Cartao save(Cartao cartao) throws SQLException {
         if (cartao.getConta() == null || cartao.getConta().getIdConta() == null) {
             throw new IllegalArgumentException("Cartão não possui uma conta válida associada.");
@@ -41,7 +39,7 @@ public class CartaoDAO {
 
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO, Statement.RETURN_GENERATED_KEYS)) {
+             CallableStatement stmt = conn.prepareCall("{CALL salvar_cartao(?, ?, ?, ?, ?, ?, ?)}")) {
 
             stmt.setString(1, cartao.getTipoCartao().name());
             stmt.setString(2, cartao.getNumCartao());
@@ -50,33 +48,31 @@ public class CartaoDAO {
             stmt.setLong(5, cartao.getConta().getIdConta());
             stmt.setDouble(6, cartao.getFatura());
 
-            stmt.executeUpdate();
+            stmt.registerOutParameter(7, Types.BIGINT);
 
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    cartao.setIdCartao(rs.getLong(1));
-                } else {
-                    throw new SQLException("Falha ao obter ID do cartão.");
-                }
-            }
+            stmt.execute();
+            long idCartao = stmt.getLong(7);
+            cartao.setIdCartao(idCartao);
+
+
         }
 
         if (cartao instanceof CartaoCredito c) {
 
             try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO_CREDITO)) {
+                 CallableStatement stmt = conn.prepareCall("{CALL salvar_cartao_credito(?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
                 if (c.getDataCompra() != null) {
                     stmt.setDate(1, Date.valueOf(c.getDataCompra()));
                 } else {
-                    stmt.setNull(1, java.sql.Types.DATE);  // Ou algum valor default, se necessário
+                    stmt.setNull(1, java.sql.Types.DATE);
                 }
 
                 // Verificar se a data de vencimento não é nula antes de setar
                 if (c.getDataVencimento() != null) {
                     stmt.setDate(2, Date.valueOf(c.getDataVencimento()));
                 } else {
-                    stmt.setNull(2, java.sql.Types.DATE);  // Ou algum valor default, se necessário
+                    stmt.setNull(2, java.sql.Types.DATE);
                 }
                 stmt.setDouble(3, c.getLimiteCredito());
                 stmt.setDouble(4, c.getPagamento());
@@ -90,7 +86,7 @@ public class CartaoDAO {
 
         } else if (cartao instanceof CartaoDebito c) {
             try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.INSERIR_CARTAO_DEBITO)) {
+                 CallableStatement stmt = conn.prepareCall("{CALL salvar_cartao_debito(?, ?, ?, ?)}")) {
 
                 stmt.setDouble(1, c.getLimiteDiario());
                 stmt.setDouble(2, c.getTaxa());
@@ -109,7 +105,7 @@ public class CartaoDAO {
         List<Cartao> cartoes = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(CartaoSql.BUSCAR_POR_CONTA)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_cartoes_conta(?)}")) {
 
             stmt.setLong(1, conta.getIdConta());
             ResultSet rs = stmt.executeQuery();
@@ -126,7 +122,7 @@ public class CartaoDAO {
 
     public Cartao buscarPorNumero(String numCartao) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(CartaoSql.BUSCAR_POR_NUMERO)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_cartoes_numero(?)}")) {
             stmt.setString(1, numCartao);
             ResultSet rs = stmt.executeQuery();
 
@@ -140,42 +136,14 @@ public class CartaoDAO {
         return null;
     }
 
-    public void atualizar(Cartao cartao) throws SQLException {
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(CartaoSql.UPDATE_CARTAO)) {
-
-            stmt.setInt(1, cartao.getSenha());
-            stmt.setBoolean(2, cartao.isStatus());
-            stmt.setDouble(3, cartao.getFatura());
-            stmt.setString(4, cartao.getNumCartao());
-
-            stmt.executeUpdate();
-        }
-
-        if (cartao instanceof CartaoCredito credito) {
-            try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(CartaoSql.UPDATE_CARTAO_CREDITO)) {
-
-                stmt.setDouble(1, credito.getLimiteCredito());
-                stmt.setDate(2, Date.valueOf(credito.getDataCompra()));
-                stmt.setDouble(3, credito.getPagamento());
-                stmt.setDouble(4, credito.getSaldoMes());
-                stmt.setLong(5, credito.getIdCartao());
 
 
-                stmt.executeUpdate();
-            }
-        }
-    }
-
-
-    public boolean alterarStatusCartao(String numCartao, boolean status) throws SQLException{
+    public boolean alterarStatusCartao(String numCartao, boolean status) throws SQLException {
         String sql = "{CALL alterar_status_cartao(?,?)}";
 
         try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt = conn.prepareCall(sql)){
-            stmt.setString(1,numCartao);
+             CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, numCartao);
             stmt.setBoolean(2, status);
 
             int resultado = stmt.executeUpdate();

@@ -2,7 +2,6 @@ package br.com.meubancodigitaljdbc.service;
 
 import br.com.meubancodigitaljdbc.dao.CartaoDAO;
 import br.com.meubancodigitaljdbc.dto.CompraCartaoDTO;
-import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.enuns.TipoCartao;
 import br.com.meubancodigitaljdbc.execptions.*;
 import br.com.meubancodigitaljdbc.model.Cartao;
@@ -13,9 +12,6 @@ import br.com.meubancodigitaljdbc.utils.CartaoUtils;
 import br.com.meubancodigitaljdbc.utils.CategoriaLimiteUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.sql.CallableStatement;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -43,16 +39,11 @@ public class CartaoService {
     }
 
 
-    public void salvarCartao(Cartao cartao, boolean isAtualizar) throws CartaoNuloException, SQLException {
+    public void salvarCartao(Cartao cartao) throws CartaoNuloException, SQLException {
         if (cartao == null || cartao.getNumCartao() == null) {
             throw new CartaoNuloException("Erro: Tentativa de Salvar o Cartão nulo");
         }
-        if (isAtualizar) {
-            cartaoDAO.atualizar(cartao);
-
-        } else {
             cartaoDAO.save(cartao);
-        }
     }
 
     public Cartao criarCartao(String contaC, TipoCartao tipoCartao, int senha, String diaVencimento)
@@ -241,7 +232,7 @@ public class CartaoService {
             return false;
         }
 
-        salvarCartao(cartaoCredito, true);
+        salvarCartao(cartaoCredito);
         LOGGER.info("Compra realizada com sucesso no cartão {}. Novo saldo: {}", dto.getNumCartao(), cartaoCredito.getSaldoMes());
         return true;
     }
@@ -278,7 +269,7 @@ public class CartaoService {
         }
         LOGGER.info("Pagamento da fatura efetuado com sucesso no cartão {}", numCartao);
 
-        salvarCartao(cartaoCredito, true);
+        salvarCartao(cartaoCredito);
 
     }
 
