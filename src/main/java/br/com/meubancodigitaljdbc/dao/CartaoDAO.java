@@ -120,7 +120,7 @@ public class CartaoDAO {
         return cartoes;
     }
 
-    public Cartao buscarPorNumero(String numCartao) throws SQLException {
+    public Cartao buscarPorNumeroCartao(String numCartao) throws SQLException {
         try (Connection conn = dataSource.getConnection();
              CallableStatement stmt = conn.prepareCall("{CALL buscar_cartoes_numero(?)}")) {
             stmt.setString(1, numCartao);

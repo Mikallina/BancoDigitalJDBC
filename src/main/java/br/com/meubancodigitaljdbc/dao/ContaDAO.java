@@ -1,12 +1,11 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.enuns.TipoConta;
+
 import br.com.meubancodigitaljdbc.mapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
-import br.com.meubancodigitaljdbc.sql.ContaSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -38,7 +37,7 @@ public class ContaDAO {
         Cliente cliente = optionalCliente.get();
 
               try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.INSERIR_CONTA, Statement.RETURN_GENERATED_KEYS)) {
+                   CallableStatement stmt = conn.prepareCall("{CALL salvar_conta(?, ?, ?, ?, ?)}")) {
 
             stmt.setString(1, conta.getTipoConta().name());
             stmt.setDouble(2, conta.getAgencia());
@@ -62,7 +61,7 @@ public class ContaDAO {
     public Conta buscarPorNumero(String numeroConta) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_POR_NUMERO)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_numero(?)}")) {
 
             stmt.setString(1, numeroConta);
             ResultSet rs = stmt.executeQuery();
@@ -74,33 +73,16 @@ public class ContaDAO {
         return null;
     }
 
-    public Cliente buscarClientePorCpf(String cpf) throws SQLException {
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CLIENTE_CPF)) {
-
-            stmt.setString(1, cpf);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    Cliente cliente = new Cliente();
-                    cliente.setIdCliente(rs.getLong("id_cliente"));
-                    cliente.setNome(rs.getString("nome"));
-                    cliente.setCpf(rs.getString("cpf"));
-                    // Preencher outras propriedades de Cliente
-                    return cliente;
-                } else {
-                    return null;  // Retorna null se não encontrar o cliente
-                }
-            }
-        }
+    public Cliente buscarClientePorCpf(String cpf) {
+        return clienteDAO.findByCpf(cpf);
     }
 
     public Conta buscarContaPorId(Long idConta) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CONTA_ID)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_id_conta(?)}")) {
 
-            stmt.setLong(1, idConta);  // Definindo o valor do idConta na consulta
+            stmt.setLong(1, idConta);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -117,8 +99,8 @@ public class ContaDAO {
         if (id == null) {
             throw new IllegalArgumentException("ID da conta não pode ser null");
         }
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ContaSql.BUSCAR_CLIENTE_CAT)) {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_id_conta_cat(?)}")) {
 
             stmt.setLong(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -139,7 +121,7 @@ public class ContaDAO {
     public List<Conta> buscarPorClienteId(Long clienteId) throws SQLException {
         List<Conta> contas = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.BUSCAR_CLIENTE_CONTA_ID)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_cliente_id(?)}")) {
             stmt.setLong(1, clienteId);
             ResultSet rs = stmt.executeQuery();
 
@@ -155,7 +137,7 @@ public class ContaDAO {
     // Método para atualizar o saldo da conta
     public void atualizarSaldo(Long idConta, double novoSaldo) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_SALDO)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_cliente_id(?, ?)}")){
 
             stmt.setDouble(1, novoSaldo);
             stmt.setLong(2, idConta);
@@ -166,7 +148,7 @@ public class ContaDAO {
     public Conta atualizarConta(Conta conta) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_CONTA)) {
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_cliente_id(?, ?, ?, ?, ?)}")){
 
             stmt.setDouble(1, conta.getSaldo());
             stmt.setInt(2, conta.getAgencia());
@@ -186,7 +168,7 @@ public class ContaDAO {
         List<Conta> contas = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.LISTAR_CONTAS);
+             CallableStatement stmt = conn.prepareCall("{CALL listar_contas()}");
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {

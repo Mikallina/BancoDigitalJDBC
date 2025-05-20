@@ -1,15 +1,11 @@
 package br.com.meubancodigitaljdbc.dao;
 
-import br.com.meubancodigitaljdbc.model.ContaCorrente;
-import br.com.meubancodigitaljdbc.model.ContaPoupanca;
-import br.com.meubancodigitaljdbc.sql.ContaSql;
-import org.springframework.stereotype.Repository;
 
+import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+
 @Repository
 public class ContaPoupancaDAO {
 
@@ -20,13 +16,13 @@ public class ContaPoupancaDAO {
     }
 
 
-    public void atualizarConta(ContaPoupanca conta) throws SQLException {
+    public void atualizarConta(ContaPoupanca contaPoupanca) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ContaSql.ATUALIZAR_CONTA_POUPANCA)) {
+             CallableStatement stmt = conn.prepareCall("{CALL atualizar_conta_poupanca(?, ?)}")){
 
-            stmt.setDouble(1, conta.getSaldo());
-            stmt.setLong(2, conta.getIdConta());
+            stmt.setDouble(1, contaPoupanca.setTaxaRendimento());
+            stmt.setLong(2, contaPoupanca.getIdConta());
 
             stmt.executeUpdate();
         }

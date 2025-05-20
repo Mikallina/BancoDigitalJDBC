@@ -2,7 +2,6 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.mapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.sql.ClienteSql;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
@@ -13,9 +12,7 @@ import java.util.Optional;
 @Repository
 public class ClienteDAO {
 
-
     private final DataSource dataSource;
-
     private ClienteRowMapper rowMapper;
 
     public ClienteDAO(DataSource dataSource, ClienteRowMapper rowMapper){
@@ -25,8 +22,8 @@ public class ClienteDAO {
 
     public void save(Cliente cliente) throws SQLException {
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ClienteSql.INSERIR_CLIENTE, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL salvar_cliente(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
             stmt.setString(1, cliente.getCpf());
             stmt.setString(2, cliente.getNome());
@@ -46,14 +43,17 @@ public class ClienteDAO {
                     cliente.setIdCliente(generatedKeys.getLong(1));
                 }
             }
+
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public Cliente findByCpf(String cpf) {
 
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ClienteSql.BUSCAR_POR_CPF)) {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_cpf_cliente(?)}")) {
 
             stmt.setString(1, cpf);
             ResultSet rs = stmt.executeQuery();
@@ -71,8 +71,8 @@ public class ClienteDAO {
     public List<Cliente> findAll() {
         List<Cliente> clientes = new ArrayList<>();
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ClienteSql.BUSCAR_TODOS);
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_todos_clientes()}");
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -91,9 +91,8 @@ public class ClienteDAO {
             throw new IllegalArgumentException("ID do cliente não pode ser null");
         }
 
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ClienteSql.BUSCAR_POR_ID)) {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_id_cliente(?)}")) {
 
             stmt.setLong(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -111,8 +110,8 @@ public class ClienteDAO {
 
     public void deleteById(Long id) {
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(ClienteSql.DELETAR_CLIENTE)) {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL deletar_cliente(?)}")) {
 
             stmt.setLong(1, id);
             stmt.executeUpdate();

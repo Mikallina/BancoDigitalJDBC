@@ -219,7 +219,7 @@ public class ContaService {
     public Conta buscarContaPorClienteEConta(String cpf, String numConta) throws SQLException {
         LOGGER.info("Buscando conta para o cliente com CPF: {} e número da conta: {}", cpf, numConta);
 
-        Cliente cliente = contaDAO.buscarClientePorCpf(cpf);  // Assumindo que existe um método para buscar cliente pelo CPF
+        Cliente cliente = contaDAO.buscarClientePorCpf(cpf);
         if (cliente == null) {
             LOGGER.error("Cliente não encontrado com CPF: {}", cpf);
             throw new IllegalArgumentException("Cliente não encontrado.");

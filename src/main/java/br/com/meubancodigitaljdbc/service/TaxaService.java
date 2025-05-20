@@ -51,7 +51,7 @@ public class TaxaService {
         double saldoRendimento = saldoAtual * Math.pow(1 + (taxaMensal / 100), 1);
         double rendimentoMensal = saldoRendimento - saldoAtual;
 
-        contaP.setTaxaRendimento(taxaRendimento);
+        contaP.setTaxaRendimento();
 
         return rendimentoMensal;
     }

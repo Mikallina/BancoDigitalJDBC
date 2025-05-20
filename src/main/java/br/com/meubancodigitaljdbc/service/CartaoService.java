@@ -184,7 +184,7 @@ public class CartaoService {
     private Cartao validarCartao(String numCartao, boolean checarStatusAtivo)
             throws CartaoNuloException, CartaoStatusException, SQLException {
 
-        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
+        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumeroCartao(numCartao));
         if (cartaoOptional.isEmpty()) {
             throw new CartaoNuloException("Cartão não encontrado");
         }
@@ -240,7 +240,7 @@ public class CartaoService {
 
 
     public void realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
-        Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
+        Cartao cartao = cartaoDAO.buscarPorNumeroCartao(numCartao);
         LOGGER.info("Iniciando pagamento de fatura. Cartão: {}, Valor: {}", numCartao, valorPagamento);
 
         validarCartao(numCartao, true);
@@ -274,7 +274,7 @@ public class CartaoService {
     }
 
     public Cartao buscarCartaoPorCliente(String numCartao) throws SQLException {
-        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumero(numCartao));
+        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumeroCartao(numCartao));
         return cartaoOptional.orElse(null);
     }
 
@@ -296,7 +296,7 @@ public class CartaoService {
 
 
     public void consultarFatura(String numCartao) throws SQLException {
-        Cartao cartao = cartaoDAO.buscarPorNumero(numCartao);
+        Cartao cartao = cartaoDAO.buscarPorNumeroCartao(numCartao);
 
         if (!(cartao instanceof CartaoCredito)) {
             throw new IllegalArgumentException("Cartão não é de crédito ou não encontrado");
