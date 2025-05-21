@@ -4,6 +4,7 @@ import br.com.meubancodigitaljdbc.dto.ContaResponseDTO;
 import br.com.meubancodigitaljdbc.dto.DepositoDTO;
 import br.com.meubancodigitaljdbc.dto.TransferenciaDTO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.execptions.ContaNaoValidaException;
 import br.com.meubancodigitaljdbc.execptions.OperacoesException;
 import br.com.meubancodigitaljdbc.model.Cliente;
@@ -21,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -269,5 +271,28 @@ public class ContaController {
         return ResponseEntity.ok(contaResponseDTO);
 
     }
+    @Operation(
+            summary = "Deletar Conta",
+            description = "Deleta um cliente com base no ID fornecido."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Conta deletado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Conta não encontrado"),
+            @ApiResponse(responseCode = "400", description = "Erro ao tentar deletar a conta")
+    })
+    @DeleteMapping("/deletar-conta/{contaId}")
+    public ResponseEntity<String> deletarContaId(@PathVariable Long contaId, HttpServletRequest request) throws ClienteInvalidoException {
+        long tempoInicio = System.currentTimeMillis();
+
+        contaService.deletarConta(contaId);
+
+        LOGGER.info("Deletar Conta {}", contaId);
+        long tempoFinal = System.currentTimeMillis();
+        long tempototal = tempoFinal - tempoInicio;
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+
+        return ResponseEntity.ok("Conta deletada com sucesso.");
+    }
+
 
 }

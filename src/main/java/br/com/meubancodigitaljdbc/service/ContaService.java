@@ -4,6 +4,7 @@ import br.com.meubancodigitaljdbc.dao.ContaCorrenteDAO;
 import br.com.meubancodigitaljdbc.dao.ContaDAO;
 import br.com.meubancodigitaljdbc.dao.ContaPoupancaDAO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.execptions.ContaNaoEncontradaException;
 import br.com.meubancodigitaljdbc.execptions.ContaNaoValidaException;
 import br.com.meubancodigitaljdbc.execptions.OperacoesException;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -238,6 +240,19 @@ public class ContaService {
 
         LOGGER.info("Conta encontrada: {}", conta.getNumConta());
         return conta;
+    }
+
+    public void deletarConta(Long contaId) throws ClienteInvalidoException {
+        LOGGER.info("Tentando deletar conta com ID: {}", contaId);
+        Optional<Conta> contaExistente = contaDAO.findById(contaId);
+
+        if (contaExistente.isEmpty()) {
+            LOGGER.warn("Conta com ID {} não encontrado para deleção.", contaId);
+            throw new ClienteInvalidoException("Conta com ID " + contaId + " não encontrado.");
+        }
+
+        contaDAO.deleteById(contaId);
+        LOGGER.info("Conta com ID {} deletado com sucesso", contaId);
     }
 
     public boolean realizarTransferenciaPoupanca(double valor, String numContaOrigem, String numContaDestino) throws SQLException {

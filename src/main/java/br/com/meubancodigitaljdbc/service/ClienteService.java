@@ -3,6 +3,7 @@ package br.com.meubancodigitaljdbc.service;
 import br.com.meubancodigitaljdbc.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.model.Cliente;
+import br.com.meubancodigitaljdbc.model.Endereco;
 import br.com.meubancodigitaljdbc.utils.ValidaCpfUtils;
 import br.com.meubancodigitaljdbc.utils.ValidarClienteUtils;
 import org.slf4j.Logger;
@@ -20,13 +21,23 @@ public class ClienteService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteService.class);
 
     private final ClienteDAO clienteDAO;
+    private final CepService cepService;
 
     @Autowired
-    public ClienteService(ClienteDAO clienteDAO) {
+    public ClienteService(ClienteDAO clienteDAO, CepService cepService) {
         this.clienteDAO = clienteDAO;
+        this.cepService = cepService;
     }
 
     public boolean salvarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException, SQLException {
+        LOGGER.info("Recebido cliente: nome={}, cpf={}, nascimento={}, endereco={}",
+                cliente.getNome(),
+                cliente.getCpf(),
+                cliente.getDataNascimento(),
+                cliente.getEndereco()
+        );
+
+
         LOGGER.info("Iniciando processo de {} do cliente com CPF: {}", isAtualizar ? "atualização" : "criação", cliente.getCpf());
 
         validarCliente(cliente, isAtualizar);
@@ -35,6 +46,7 @@ public class ClienteService {
         LOGGER.info("Cliente com CPF {} {} com sucesso.", cliente.getCpf(), isAtualizar ? "atualizado" : "cadastrado");
         return isAtualizar;
     }
+
 
     public Cliente buscarClientePorCpf(String cpf) {
         LOGGER.info("Buscando cliente por CPF: {}", cpf);
@@ -86,23 +98,30 @@ public class ClienteService {
 
     }
 
+
+    public Cliente atualizarCliente(Long id, Cliente cliente) throws Exception {
+        Cliente existente = clienteDAO.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("Cliente com ID " + id + " não encontrado."));
+
+        cliente.setIdCliente(id);
+
+        clienteDAO.update(cliente);
+        return cliente;
+    }
+
+
+
     public boolean validarCpf(String cpf, boolean isAtualizar, Long clienteId) {
         if (!ValidaCpfUtils.isCPF(cpf)) {
             return false;
         }
-        if (isAtualizar) {
-            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+        Cliente clienteExistente = clienteDAO.findByCpf(cpf);
 
-            if (clienteExistente != null && !clienteExistente.getIdCliente().equals(clienteId)) {
-                return false;
-            }
+        if (isAtualizar) {
+            return clienteExistente == null || clienteExistente.getIdCliente().equals(clienteId);
         } else {
-            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
-            if (clienteExistente != null) {
-                return false;
-            }
+            return clienteExistente == null;
         }
-        return true;
     }
 
 }

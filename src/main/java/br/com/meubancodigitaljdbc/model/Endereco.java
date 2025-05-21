@@ -72,8 +72,11 @@ package br.com.meubancodigitaljdbc.model;
             this.uf = uf;
         }
 
-        public String complemento() {
+        public String getComplemento() {
             return complemento;
         }
 
-}
+        public void setComplemento(String complemento) {
+            this.complemento = complemento;
+        }
+    }

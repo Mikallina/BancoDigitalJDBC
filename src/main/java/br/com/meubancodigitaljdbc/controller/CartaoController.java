@@ -153,6 +153,8 @@ public class CartaoController {
     }
 
 
+
+
     @Operation(
             summary = "Alterar limite do cartão",
             description = "Altera o limite de crédito de um cartão com base no número do cartão e no novo limite informado."
@@ -294,6 +296,29 @@ public class CartaoController {
 
         // Retorna uma resposta OK após o pagamento ser realizado com sucesso
         return ResponseEntity.ok("OK");
+    }
+
+    @Operation(
+            summary = "Deletar Cartao",
+            description = "Deleta um cartao com base no ID fornecido."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cartao deletado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Cartao não encontrado"),
+            @ApiResponse(responseCode = "400", description = "Erro ao tentar deletar a Cartao")
+    })
+    @DeleteMapping("/deletar-cartao/{cartaoId}")
+    public ResponseEntity<String> deletarCartaoId(@PathVariable Long cartaoId, HttpServletRequest request) throws ClienteInvalidoException, SQLException {
+        long tempoInicio = System.currentTimeMillis();
+
+        cartaoService.deletarCartao(cartaoId);
+
+        LOGGER.info("Deletar Cartao {}", cartaoId);
+        long tempoFinal = System.currentTimeMillis();
+        long tempototal = tempoFinal - tempoInicio;
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+
+        return ResponseEntity.ok("Cartao deletado com sucesso.");
     }
 
 

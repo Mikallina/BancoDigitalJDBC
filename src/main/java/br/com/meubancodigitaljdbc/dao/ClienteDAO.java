@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.mapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
@@ -14,7 +15,7 @@ public class ClienteDAO {
 
     private final DataSource dataSource;
     private ClienteRowMapper rowMapper;
-
+    @Autowired
     public ClienteDAO(DataSource dataSource, ClienteRowMapper rowMapper){
         this.dataSource = dataSource;
         this.rowMapper = rowMapper;
@@ -31,22 +32,17 @@ public class ClienteDAO {
             stmt.setString(4, cliente.getCategoria().name());
             stmt.setString(5, cliente.getEndereco().getBairro());
             stmt.setString(6, cliente.getEndereco().getCep());
-            stmt.setString(7,cliente.getEndereco().complemento());
+            stmt.setString(7, cliente.getEndereco().getComplemento());
             stmt.setString(8, cliente.getEndereco().getLogradouro());
             stmt.setInt(9, cliente.getEndereco().getNumero());
             stmt.setString(10, cliente.getEndereco().getLocalidade());
             stmt.setString(11, cliente.getEndereco().getUf());
+            stmt.registerOutParameter(12, java.sql.Types.BIGINT);
+
             stmt.executeUpdate();
 
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    cliente.setIdCliente(generatedKeys.getLong(1));
-                }
-            }
-
-        }
-        catch (SQLException e) {
-            e.printStackTrace();
+            long idGerado = stmt.getLong(12);
+            cliente.setIdCliente(idGerado);
         }
     }
 
@@ -118,6 +114,27 @@ public class ClienteDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void update(Cliente cliente) throws SQLException {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL atualizar_cliente(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+
+            stmt.setLong(1, cliente.getIdCliente());
+            stmt.setString(2, cliente.getCpf());
+            stmt.setString(3, cliente.getNome());
+            stmt.setDate(4, Date.valueOf(cliente.getDataNascimento()));
+            stmt.setString(5, cliente.getCategoria().name());
+            stmt.setString(6, cliente.getEndereco().getBairro());
+            stmt.setString(7, cliente.getEndereco().getCep());
+            stmt.setString(8, cliente.getEndereco().getComplemento());
+            stmt.setString(9, cliente.getEndereco().getLogradouro());
+            stmt.setInt(10, cliente.getEndereco().getNumero());
+            stmt.setString(11, cliente.getEndereco().getLocalidade());
+            stmt.setString(12, cliente.getEndereco().getUf());
+
+            stmt.executeUpdate();
         }
     }
 

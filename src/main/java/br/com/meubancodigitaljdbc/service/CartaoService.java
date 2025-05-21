@@ -306,4 +306,16 @@ public class CartaoService {
     }
 
 
+    public void deletarCartao(Long cartaoId) throws ClienteInvalidoException, SQLException {
+        LOGGER.info("Tentando deletar cartao com ID: {}", cartaoId);
+        Optional<Cartao> contaExistente = cartaoDAO.findById(cartaoId);
+
+        if (contaExistente.isEmpty()) {
+            LOGGER.warn("Cartao com ID {} não encontrado para deleção.", cartaoId);
+            throw new ClienteInvalidoException("Cartao com ID " + cartaoId + " não encontrado.");
+        }
+
+        cartaoDAO.deleteById(cartaoId);
+        LOGGER.info("Cartao com ID {} deletado com sucesso", cartaoId);
+    }
 }

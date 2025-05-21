@@ -1,6 +1,8 @@
 package br.com.meubancodigitaljdbc.utils;
-import java.util.Random;
+import org.springframework.stereotype.Service;
 
+import java.util.Random;
+@Service
 public class CartaoUtils {
 
     private static final Random RANDOM = new Random();

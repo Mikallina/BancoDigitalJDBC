@@ -1,7 +1,9 @@
 package br.com.meubancodigitaljdbc.utils;
 
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ContaUtils {
 
     public String gerarNumeroConta(int agencia, TipoConta tipoConta) {

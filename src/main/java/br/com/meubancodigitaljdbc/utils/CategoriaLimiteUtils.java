@@ -1,7 +1,9 @@
 package br.com.meubancodigitaljdbc.utils;
 
 import br.com.meubancodigitaljdbc.enuns.Categoria;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CategoriaLimiteUtils {
 
     private CategoriaLimiteUtils() {

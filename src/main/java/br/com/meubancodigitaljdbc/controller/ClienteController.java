@@ -38,20 +38,15 @@ public class ClienteController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteController.class);
 
 
+    @PostMapping("/adicionar-cliente")
     @Operation(
             summary = "Adicionar novo cliente",
             description = "Adiciona um novo cliente ao banco de dados. Retorna status 201 se criado com sucesso."
     )
     @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
-    @PostMapping("/adicionar-cliente")
     public ResponseEntity<String> addCliente(
-            @RequestBody(
-                    description = "Dados do cliente a ser criado",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = Cliente.class))
-            )
-            Cliente cliente,
+            @RequestBody Cliente cliente,
             HttpServletRequest request
     ) throws Exception {
         long tempoInicio = System.currentTimeMillis();
@@ -105,7 +100,7 @@ public class ClienteController {
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cliente.class)))),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
-    @GetMapping("/clientes")
+    @GetMapping("/clientes/listar-clientes")
     public ResponseEntity<List<Cliente>> getAllClientes(HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
 
@@ -156,16 +151,16 @@ public class ClienteController {
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
     })
     @PutMapping("/atualizar-cliente/{clienteId}")
-    public Optional<Cliente> atualizarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) {
-        long tempoInicio = System.currentTimeMillis();
-        Optional<Cliente> clienteExistente = clienteService.findById(clienteId);
+    public ResponseEntity<?> atualizarClientePorID(
+            @PathVariable Long clienteId,
+            @RequestBody Cliente cliente, // <- ESSENCIAL!
+            HttpServletRequest request
+    ) throws Exception {
 
-        LOGGER.info("Atualizar cliente por ID {}", clienteId);
-        long tempoFinal = System.currentTimeMillis();
-        long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+            cliente.setIdCliente(clienteId);
+            clienteService.atualizarCliente(clienteId,cliente);
+            return ResponseEntity.ok("Cliente atualizado com sucesso");
 
-        return clienteExistente;
     }
 
 

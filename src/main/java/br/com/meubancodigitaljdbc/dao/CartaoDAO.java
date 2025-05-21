@@ -14,11 +14,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
+
 @Repository
 public class CartaoDAO {
 
     private final DataSource dataSource;
     private final ContaDAO contaDAO;
+
+    private CartaoRowMapper rowMapper;
 
     @Autowired
     public CartaoDAO(DataSource dataSource, ContaDAO contaDAO) {
@@ -183,5 +187,48 @@ public class CartaoDAO {
             return stmt.getBoolean(3);
         }
     }
+
+
+    public void deleteById(Long idCartao) throws SQLException {
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL deletar_cartao(?)}")) {
+            stmt.setLong(1, idCartao);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+
+    public Optional<Cartao> findById(Long idCartao) {
+        if (idCartao == null) {
+            throw new IllegalArgumentException("ID do cartao não pode ser null");
+        }
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL buscar_id_cartao(?)}")) {
+
+            stmt.setLong(1, idCartao);
+            ResultSet rs = stmt.executeQuery();
+
+
+            if (rs.next()) {
+                Long idConta = rs.getLong("id_conta");
+
+                Optional<Conta> contaOpt = contaDAO.findById(idConta);
+                Conta conta = contaOpt.orElseThrow(() ->
+                        new IllegalArgumentException("Conta não encontrada para o cartão"));
+
+                CartaoRowMapper rowMapper = new CartaoRowMapper(conta);
+                return Optional.of(rowMapper.mapRow(rs, 0));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
+
 }
 

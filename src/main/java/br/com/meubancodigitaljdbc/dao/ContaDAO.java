@@ -4,8 +4,6 @@ package br.com.meubancodigitaljdbc.dao;
 import br.com.meubancodigitaljdbc.mapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.Conta;
-import br.com.meubancodigitaljdbc.model.ContaCorrente;
-import br.com.meubancodigitaljdbc.model.ContaPoupanca;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -37,21 +35,18 @@ public class ContaDAO {
         Cliente cliente = optionalCliente.get();
 
               try (Connection conn = dataSource.getConnection();
-                   CallableStatement stmt = conn.prepareCall("{CALL salvar_conta(?, ?, ?, ?, ?)}")) {
+                   CallableStatement stmt = conn.prepareCall("{CALL salvar_conta(?, ?, ?, ?, ?, ?)}")) {
 
             stmt.setString(1, conta.getTipoConta().name());
             stmt.setDouble(2, conta.getAgencia());
             stmt.setString(3, conta.getNumConta());
             stmt.setDouble(4, conta.getSaldo());
             stmt.setLong(5, conta.getCliente().getIdCliente());
-
+            stmt.registerOutParameter(6, Types.BIGINT);
             stmt.executeUpdate();
 
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    conta.setIdConta(generatedKeys.getLong(1));
-                }
-            }
+           long idGerado = stmt.getLong(6);
+           conta.setIdConta(idGerado);
         }
 
         return conta;
@@ -95,14 +90,14 @@ public class ContaDAO {
     }
 
 
-    public Optional<Conta> findById(Long id) {
-        if (id == null) {
+    public Optional<Conta> findById(Long idConta) {
+        if (idConta == null) {
             throw new IllegalArgumentException("ID da conta não pode ser null");
         }
         try (Connection conn = dataSource.getConnection();
              CallableStatement stmt = conn.prepareCall("{CALL buscar_id_conta_cat(?)}")) {
 
-            stmt.setLong(1, id);
+            stmt.setLong(1, idConta);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -162,6 +157,8 @@ public class ContaDAO {
     }
 
 
+/*
+
     // Método para buscar todas as contas
     public List<Conta> findAll() {
 
@@ -199,6 +196,19 @@ public class ContaDAO {
         }
 
         return contas;
+    }*/
+
+    public void deleteById(Long id) {
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL deletar_conta(?)}")) {
+
+            stmt.setLong(1, id);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

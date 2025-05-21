@@ -18,6 +18,9 @@ public class DepositoDTO {
 	}
 
 
+	public void setNumContaDestino(String numContaDestino) {
+		this.numContaDestino = numContaDestino;
+	}
 
 	public String getCpf() {
 		return cpf;

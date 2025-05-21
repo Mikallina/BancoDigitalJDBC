@@ -16,6 +16,8 @@ public class Cliente {
     private Endereco endereco;
     private Categoria categoria;
     private List<Conta> contas = new ArrayList<Conta>();
+
+
     public Cliente() {
 
     }
@@ -116,6 +118,13 @@ public class Cliente {
     }
 
 
+    public String getStatusCpf() {
+        return statusCpf;
+    }
+
+    public void setStatusCpf(String statusCpf) {
+        this.statusCpf = statusCpf;
+    }
 
 
 }
