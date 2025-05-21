@@ -1,0 +1,46 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `salvar_cliente`(
+		IN p_cpf VARCHAR(255),
+		IN p_nome VARCHAR(255),
+		IN p_data_nascimento DATE,
+		IN p_categoria VARCHAR(40),
+		IN p_bairro VARCHAR(100),
+		IN p_cep VARCHAR(20),
+		IN p_complemento VARCHAR (50),
+		IN p_logradouro VARCHAR (255),
+		IN p_numero INT,
+		IN p_localidade VARCHAR (100),
+		IN p_uf VARCHAR(2),
+        OUT p_id_cliente BIGINT
+
+)
+BEGIN
+
+INSERT INTO cliente (
+			cpf,
+			nome,
+            data_nascimento,
+            categoria,
+            bairro,
+            cep,
+            complemento,
+            logradouro,
+            numero,
+            localidade,
+            uf
+			)
+	VALUES (
+		p_cpf,
+		p_nome ,
+		p_data_nascimento,
+		p_categoria,
+		p_bairro,
+		p_cep,
+		p_complemento,
+		p_logradouro,
+		p_numero,
+		p_localidade,
+		p_uf
+
+	);
+SET p_id_cliente = LAST_INSERT_ID();
+END

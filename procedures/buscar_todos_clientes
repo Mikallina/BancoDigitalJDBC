@@ -1,0 +1,4 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `buscar_todos_clientes`()
+BEGIN
+    SELECT * FROM cliente;
+END

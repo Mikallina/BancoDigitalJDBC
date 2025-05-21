@@ -1,0 +1,15 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_conta`(
+    IN p_saldo DECIMAL(15, 2),
+    IN p_agencia VARCHAR(20),
+    IN p_num_conta VARCHAR(20),
+    IN p_tipo_conta VARCHAR(20),
+    IN p_id_conta BIGINT
+)
+BEGIN
+    UPDATE conta
+    SET saldo = p_saldo,
+        agencia = p_agencia,
+        num_conta = p_num_conta,
+        tipo_conta = p_tipo_conta
+    WHERE id_conta = p_id_conta;
+END

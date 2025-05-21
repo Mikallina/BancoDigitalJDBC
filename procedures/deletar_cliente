@@ -1,0 +1,8 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deletar_cliente`(
+		IN p_id_cliente BIGINT
+        )
+BEGIN
+		DELETE c.*
+		FROM cliente c
+		WHERE c.id_cliente = p_id_cliente;
+END

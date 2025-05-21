@@ -1,0 +1,31 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `salvar_cartao_credito`(
+	IN p_data_compra DATE,
+    IN p_data_vencimento DATE,
+    IN p_limite_credito DOUBLE,
+    IN p_pagamento DOUBLE,
+    IN p_saldo_mes DOUBLE,
+    IN p_taxa DOUBLE,
+    IN p_id_cartao BIGINT,
+    IN p_dia_vencimento VARCHAR(10)
+)
+BEGIN
+    INSERT INTO cartao_credito (
+        data_compra,
+        data_vencimento,
+        limite_credito,
+        pagamento,
+        saldo_mes,
+        taxa,
+        id_cartao,
+        dia_vencimento
+    ) VALUES (
+        p_data_compra,
+        p_data_vencimento,
+        p_limite_credito,
+        p_pagamento,
+        p_saldo_mes,
+        p_taxa,
+        p_id_cartao,
+        p_dia_vencimento
+    );
+END

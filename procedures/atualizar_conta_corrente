@@ -1,0 +1,9 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_conta_corrente`(
+		IN p_id_conta BIGINT,
+        IN p_taxa_manutencao DOUBLE
+        )
+BEGIN
+	UPDATE conta_corrente
+    SET taxa_manutencao = p_taxa_manutencao
+    WHERE id_conta = p_id_conta;
+END

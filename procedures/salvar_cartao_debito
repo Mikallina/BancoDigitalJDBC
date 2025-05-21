@@ -1,0 +1,10 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `salvar_cartao_debito`(
+    IN p_limite_diario DOUBLE,
+    IN p_taxa DOUBLE,
+    IN p_total_pgto_hoje DOUBLE,
+    IN p_id_cartao BIGINT
+)
+BEGIN
+    INSERT INTO cartao_debito (limite_diario, taxa, total_pgto_hoje, id_cartao)
+    VALUES (p_limite_diario, p_taxa, p_total_pgto_hoje, p_id_cartao);
+END

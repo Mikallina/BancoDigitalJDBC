@@ -1,0 +1,9 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `alterar_status_cartao`(
+    IN p_num_cartao VARCHAR(100),
+    IN p_status BOOLEAN
+)
+BEGIN
+    UPDATE cartao
+    SET status = p_status
+    WHERE num_cartao = p_num_cartao;
+END

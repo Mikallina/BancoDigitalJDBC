@@ -1,0 +1,25 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `salvar_conta`(
+		IN p_tipo_conta VARCHAR(20),
+        IN p_agencia INT,
+        IN p_num_conta VARCHAR(30),
+        IN p_saldo DOUBLE,
+        IN p_id_cliente BIGINT,
+        OUT p_id_conta BIGINT
+		)
+BEGIN
+	INSERT INTO conta (
+		tipo_conta,
+        agencia,
+        num_conta,
+        saldo,
+        cliente_id
+        )
+    VALUES (
+		 p_tipo_conta,
+         p_agencia,
+         p_num_conta,
+         p_saldo,
+         p_id_cliente
+    );
+      SET p_id_conta = LAST_INSERT_ID();
+END

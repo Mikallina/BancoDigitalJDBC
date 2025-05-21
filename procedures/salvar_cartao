@@ -1,0 +1,29 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `salvar_cartao`(
+    IN p_tipo_cartao VARCHAR(20),
+    IN p_num_cartao VARCHAR(100),
+    IN p_senha INT,
+    IN p_status BOOLEAN,
+    IN p_id_conta BIGINT,
+    IN p_fatura DOUBLE,
+    OUT p_id_cartao BIGINT
+)
+BEGIN
+    INSERT INTO cartao(
+		tipo_cartao,
+		num_cartao,
+		senha,
+		status,
+		id_conta,
+		fatura
+		)
+    VALUES(
+		p_tipo_cartao,
+		p_num_cartao,
+		p_senha,
+		p_status,
+		p_id_conta,
+		p_fatura
+    );
+
+    SET p_id_cartao = LAST_INSERT_ID();
+END

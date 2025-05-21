@@ -1,0 +1,9 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_saldo`(
+	IN p_id_conta BIGINT,
+    IN p_saldo DOUBLE
+    )
+BEGIN
+	UPDATE conta
+    SET saldo = p_saldo
+    WHERE id_conta = p_id_conta;
+END

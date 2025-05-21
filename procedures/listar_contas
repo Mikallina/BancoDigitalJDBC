@@ -1,0 +1,4 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `listar_contas`()
+BEGIN
+    SELECT * FROM conta;
+END
