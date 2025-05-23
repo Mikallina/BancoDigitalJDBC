@@ -106,7 +106,8 @@ public class ContaService {
 
         double valorAplicado;
 
-         if (aplicarTaxa) {
+        // Verificação para aplicar a taxa de manutenção
+        if (aplicarTaxa) {
             if (tipoConta == TipoConta.CORRENTE && conta instanceof ContaCorrente contaCorrente) {
                 Cliente cliente = contaCorrente.getCliente();
                 valorAplicado = taxaService.taxaManutencaoCC(cliente, contaCorrente);
@@ -136,7 +137,7 @@ public class ContaService {
             LOGGER.info("Conta salva com sucesso após aplicação de taxa ou rendimento.");
         } catch (ContaNaoValidaException e) {
             LOGGER.error("Erro ao salvar a conta após aplicação de taxa ou rendimento: {}", e.getMessage(), e);
-            // Não re-lança a exceção, apenas registra o erro
+
         }
 
 
@@ -203,10 +204,8 @@ public class ContaService {
             LOGGER.info("Transferência realizada via PIX. Conta origem: {}", numContaOrigem);
         }
 
-        contaDAO.atualizarSaldo(contaOrigem.getIdConta(), contaOrigem.getSaldo());
         LOGGER.info("Saldo atualizado para a conta origem (ID: {}): {}", contaOrigem.getIdConta(), contaOrigem.getSaldo());
 
-        // 	Se houve alguma modificação na conta de destino, salvar também
         if (contaDestino != null && (transferenciaPoupança || transferenciaOutrasContas)) {
             contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
             LOGGER.info("Saldo atualizado para a conta destino ID: {}): {}", contaDestino.getIdConta(), contaDestino.getSaldo());

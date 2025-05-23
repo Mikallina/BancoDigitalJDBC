@@ -67,8 +67,6 @@ public class ContaRowMapper implements RowMapper<Conta> {
         }
 
         Conta conta;
-
-        // Mapeia a conta de acordo com o tipo
         if (tipo == TipoConta.CORRENTE) {
             conta = new ContaCorrente(cliente, rs.getInt("agencia"), rs.getString("num_conta"), tipo);
         } else if (tipo == TipoConta.POUPANCA) {

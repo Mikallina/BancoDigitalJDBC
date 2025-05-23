@@ -12,9 +12,9 @@ public class TransferenciaDTO {
     private String numContaOrigem;
     private Long idConta;
     private double valor;
-	
-	
-    public TransferenciaDTO() {}
+
+
+	public TransferenciaDTO() {}
     
 
 	public TransferenciaDTO(Long id, String chave, String numContaDestino, String numContaOrigem, Long idConta,
@@ -27,11 +27,7 @@ public class TransferenciaDTO {
 		this.idConta = idConta;
 		this.valor = valor;
 	}
-	
 
-	public String getNumContaOrigem() {
-		return numContaOrigem;
-	}
 
 	public Long getId() {
 		return id;
@@ -40,18 +36,44 @@ public class TransferenciaDTO {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
 	public String getChave() {
 		return chave;
 	}
+
+	public void setChave(String chave) {
+		this.chave = chave;
+	}
+
 	public String getNumContaDestino() {
 		return numContaDestino;
 	}
+
+	public void setNumContaDestino(String numContaDestino) {
+		this.numContaDestino = numContaDestino;
+	}
+
+	public String getNumContaOrigem() {
+		return numContaOrigem;
+	}
+
+	public void setNumContaOrigem(String numContaOrigem) {
+		this.numContaOrigem = numContaOrigem;
+	}
+
+	public Long getIdConta() {
+		return idConta;
+	}
+
+	public void setIdConta(Long idConta) {
+		this.idConta = idConta;
+	}
+
 	public double getValor() {
 		return valor;
 	}
+
 	public void setValor(double valor) {
 		this.valor = valor;
 	}
-
-
 }

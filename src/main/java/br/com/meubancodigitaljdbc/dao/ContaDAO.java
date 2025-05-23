@@ -128,14 +128,12 @@ public class ContaDAO {
         return contas;
     }
 
-
-    // Método para atualizar o saldo da conta
     public void atualizarSaldo(Long idConta, double novoSaldo) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_cliente_id(?, ?)}")){
+             CallableStatement stmt = conn.prepareCall("{CALL atualizar_saldo(?, ?)}")){
+            stmt.setLong(1, idConta);
+            stmt.setDouble(2, novoSaldo);
 
-            stmt.setDouble(1, novoSaldo);
-            stmt.setLong(2, idConta);
             stmt.executeUpdate();
         }
     }

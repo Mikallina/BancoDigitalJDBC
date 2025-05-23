@@ -127,7 +127,7 @@ public class ContaController {
             )
             TransferenciaDTO transferenciaDTO,
             HttpServletRequest request
-    ) throws SQLException {
+    ) throws SQLException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.realizarTransferenciaPIX(
@@ -154,14 +154,9 @@ public class ContaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos ou conta não encontrada")
     @PostMapping("/transferirPoupanca")
     public ResponseEntity<String> transferirPoupanca(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Dados da transferência para poupança",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = TransferenciaDTO.class))
-            )
-            TransferenciaDTO transferenciaDTO,
+            @RequestBody TransferenciaDTO transferenciaDTO,
             HttpServletRequest request
-    ) throws SQLException {
+    ) throws SQLException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.realizarTransferenciaPoupanca(
@@ -195,7 +190,7 @@ public class ContaController {
             )
             TransferenciaDTO transferenciaDTO,
             HttpServletRequest request
-    ) throws SQLException {
+    ) throws SQLException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.realizarTransferenciaOutrasContas(
