@@ -50,7 +50,7 @@ public class CartaoService {
             throws SQLException {
 
         Conta conta = contaService.buscarContas(contaC);
-
+        LOGGER.info("Conta encontrada: {}, Tipo: {}", contaC, tipoCartao);
         if (conta == null) {
             throw new IllegalArgumentException("Erro: Cliente não pode ser null.");
         }
@@ -236,6 +236,7 @@ public class CartaoService {
         LOGGER.info("Compra realizada com sucesso no cartão {}. Novo saldo: {}", dto.getNumCartao(), cartaoCredito.getSaldoMes());
         return true;
     }
+
 
 
 

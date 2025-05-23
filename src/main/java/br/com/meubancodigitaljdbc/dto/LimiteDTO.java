@@ -6,6 +6,7 @@ public class LimiteDTO {
 	private double limite;
 	private double novoLimite;
 
+	public LimiteDTO(){}
 	public LimiteDTO(Long id, double limite, double novoLimite) {
 		super();
 		this.id = id;

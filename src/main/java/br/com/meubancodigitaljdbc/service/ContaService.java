@@ -193,12 +193,15 @@ public class ContaService {
             }
             contaOrigem.setSaldo(contaOrigem.getSaldo() - valor);
             contaDestino.setSaldo(contaDestino.getSaldo() + valor);
+
+
             LOGGER.info("Transferência realizada entre contas. Conta origem: {}, Conta destino: {}", numContaOrigem, numContaDestino);
         }
 
         if (transferenciaPix) {
             contaOrigem.setSaldo(contaOrigem.getSaldo() - valor);
             LOGGER.info("Transferência realizada via PIX. Conta origem: {}", numContaOrigem);
+
         }
 
         LOGGER.info("Saldo atualizado para a conta origem (ID: {}): {}", contaOrigem.getIdConta(), contaOrigem.getSaldo());
@@ -207,7 +210,7 @@ public class ContaService {
             contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
             LOGGER.info("Saldo atualizado para a conta destino ID: {}): {}", contaDestino.getIdConta(), contaDestino.getSaldo());
         }
-
+        contaDAO.atualizarSaldo(contaOrigem.getIdConta(),contaOrigem.getSaldo());
         return true;
     }
 

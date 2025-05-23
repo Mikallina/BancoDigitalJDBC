@@ -29,16 +29,14 @@ public class CartaoRowMapper implements RowMapper<Cartao> {
 
         if (tipoCartao == TipoCartao.CREDITO) {
             CartaoCredito credito = new CartaoCredito();
-            java.sql.Date dataCompra = rs.getDate("data_compra");
+            credito.setDataCompra(rs.getDate("data_compra").toLocalDate());
             credito.setDiaVencimento(rs.getString("dia_vencimento"));
             credito.setLimiteCredito(rs.getDouble("limite_credito"));
             credito.setPagamento(rs.getDouble("pagamento"));
             credito.setSaldoMes(rs.getDouble("saldo_mes"));
            // credito.setTaxa(rs.getDouble("taxa"));
             credito.setIdCartao(rs.getLong("id_cartao"));
-            if (dataCompra != null) {
-                credito.setDataCompra(dataCompra.toLocalDate());
-            }
+
             java.sql.Date dataVencimento = rs.getDate("data_vencimento");
             if (dataVencimento != null) {
                 credito.setDataVencimento(dataVencimento.toLocalDate());
@@ -72,9 +70,5 @@ public class CartaoRowMapper implements RowMapper<Cartao> {
         return cartao;
     }
 
-    // Este método é redundante e pode ser removido se não for usado:
-    public Cartao map(ResultSet rs) throws SQLException {
-        return map(rs, this.conta);
-    }
 
 }

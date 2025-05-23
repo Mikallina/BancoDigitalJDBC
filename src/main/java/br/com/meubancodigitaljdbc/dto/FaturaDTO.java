@@ -4,7 +4,8 @@ public class FaturaDTO {
 	
 	private double valor;
 
-    // Getters e Setters
+
+    public FaturaDTO(){}
     public double getValor() {
         return valor;
     }

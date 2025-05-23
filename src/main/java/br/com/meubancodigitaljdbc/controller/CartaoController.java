@@ -57,7 +57,6 @@ public class CartaoController {
                                                @RequestParam(required = false) String diaVencimento, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        // Chama o serviço para criar o cartão
         Cartao cartao = cartaoService.criarCartao(contaC, tipoCartao, 1234, diaVencimento);
 
         LOGGER.info("Emitir cartão: {} ", tipoCartao);

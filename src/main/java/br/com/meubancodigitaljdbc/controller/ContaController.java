@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -119,15 +118,10 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "PIX realizado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos ou chave PIX incorreta")
     @PostMapping("/efetuarPIX")
-    public ResponseEntity<String> efetuarPIX(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Dados necessários para o PIX",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = TransferenciaDTO.class))
-            )
-            TransferenciaDTO transferenciaDTO,
+    public ResponseEntity<String> eftuarPix(
+            @RequestBody TransferenciaDTO transferenciaDTO,
             HttpServletRequest request
-    ) throws SQLException, ContaNaoValidaException {
+    ) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.realizarTransferenciaPIX(
@@ -268,6 +262,7 @@ public class ContaController {
         return ResponseEntity.ok(contaResponseDTO);
 
     }
+
     @Operation(
             summary = "Deletar Conta",
             description = "Deleta um cliente com base no ID fornecido."

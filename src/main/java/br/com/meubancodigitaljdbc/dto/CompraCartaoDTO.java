@@ -34,6 +34,8 @@ public class CompraCartaoDTO {
 		return dataCompra;
 	}
 
+	public CompraCartaoDTO(){}
+
 	public CompraCartaoDTO(Long id, double valor, LocalDate dataCompra, String numCartao) {
 		super();
 		this.id = id;

@@ -4,6 +4,8 @@ public class PagamentoFaturaDTO {
 	
 	private String numCartao;
     private double valor;
+
+	public PagamentoFaturaDTO(){}
 	public PagamentoFaturaDTO(String numCartao, double valor) {
 		super();
 		this.numCartao = numCartao;

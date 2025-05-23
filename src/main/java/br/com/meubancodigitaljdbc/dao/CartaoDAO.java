@@ -71,8 +71,6 @@ public class CartaoDAO {
                 } else {
                     stmt.setNull(1, java.sql.Types.DATE);
                 }
-
-                // Verificar se a data de vencimento não é nula antes de setar
                 if (c.getDataVencimento() != null) {
                     stmt.setDate(2, Date.valueOf(c.getDataVencimento()));
                 } else {
@@ -229,6 +227,7 @@ public class CartaoDAO {
 
         return Optional.empty();
     }
+
 
 }
 

@@ -9,6 +9,8 @@ public class AlterarSenhaDTO {
     private int senhaAntiga;
 
     private int senhaNova;
+
+	public AlterarSenhaDTO(){}
 	public AlterarSenhaDTO(String cpf, int senhaAntiga, int senhaNova) {
 		super();
 		this.cpf = cpf;
