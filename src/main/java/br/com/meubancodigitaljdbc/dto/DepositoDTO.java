@@ -12,6 +12,10 @@ public class DepositoDTO {
 	@Schema(description = "Número da conta destino", example = "CC-1234-xxxxxxxx")
     private String numContaDestino;
 
+	public DepositoDTO() {
+
+	}
+
 
 	public String getNumContaDestino() {
 		return numContaDestino;
@@ -30,14 +34,14 @@ public class DepositoDTO {
 		this.cpf = cpf;
 	}
 
-	public double getValor() {
+	public Double getValor() {
 		return valor;
 	}
-	public void setValor(double valor) {
+	public void setValor(Double valor) {
 		this.valor = valor;
 	}
 
-	public DepositoDTO(String cpf, double valor, String numContaDestino) {
+	public DepositoDTO(String cpf, Double valor, String numContaDestino) {
 		super();
 		this.cpf = cpf;
 		this.valor = valor;

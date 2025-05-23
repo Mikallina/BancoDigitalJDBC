@@ -143,7 +143,7 @@ public class ContaDAO {
     public Conta atualizarConta(Conta conta) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt = conn.prepareCall("{CALL buscar_conta_cliente_id(?, ?, ?, ?, ?)}")){
+             CallableStatement stmt = conn.prepareCall("{CALL atualizar_conta(?, ?, ?, ?, ?)}")){
 
             stmt.setDouble(1, conta.getSaldo());
             stmt.setInt(2, conta.getAgencia());

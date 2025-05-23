@@ -1,0 +1,8 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `buscar_id_conta`(
+	IN p_id_conta BIGINT
+        )
+BEGIN
+    SELECT c.*
+    FROM conta c
+    WHERE c.id_conta = p_id_conta;
+END

@@ -91,13 +91,15 @@ public class ContaController {
     }
 
     @Operation(summary = "Realiza depósito em uma conta")
-    @ApiResponse(responseCode = "200", description = "Depósito realizado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Depósito realizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
     @PostMapping("/depositar")
-    public ResponseEntity<String> depositar(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do depósito", required = true, content = @Content(schema = @Schema(implementation = DepositoDTO.class))
-    )
-                                            DepositoDTO depositoDTO, HttpServletRequest request) throws SQLException, OperacoesException, ContaNaoValidaException {
-
+    public ResponseEntity<String> depositar(
+            @RequestBody DepositoDTO depositoDTO,
+            HttpServletRequest request
+    ) throws SQLException, OperacoesException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
         contaService.realizarDeposito(depositoDTO.getNumContaDestino(), depositoDTO.getValor());

@@ -5,7 +5,6 @@ import br.com.meubancodigitaljdbc.dao.ContaDAO;
 import br.com.meubancodigitaljdbc.dao.ContaPoupancaDAO;
 import br.com.meubancodigitaljdbc.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.execptions.ClienteInvalidoException;
-import br.com.meubancodigitaljdbc.execptions.ContaNaoEncontradaException;
 import br.com.meubancodigitaljdbc.execptions.ContaNaoValidaException;
 import br.com.meubancodigitaljdbc.execptions.OperacoesException;
 import br.com.meubancodigitaljdbc.model.*;
@@ -29,13 +28,19 @@ public class ContaService {
 
     private final TaxaService taxaService;
 
+    private final ContaCorrenteDAO contaCorrenteDAO;
+
+    private final ContaPoupancaDAO contaPoupancaDAO;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ContaService.class);
 
     @Autowired
-    public ContaService(ContaDAO contaDAO, DataSource dataSource, TaxaService taxaService) {
+    public ContaService(ContaDAO contaDAO, DataSource dataSource, TaxaService taxaService, ContaCorrenteDAO contaCorrenteDAO, ContaPoupancaDAO contaPoupancaDAO) {
         this.contaDAO = contaDAO;
         this.dataSource = dataSource;
         this.taxaService = taxaService;
+        this.contaCorrenteDAO = contaCorrenteDAO;
+        this.contaPoupancaDAO = contaPoupancaDAO;
     }
 
 
@@ -87,7 +92,7 @@ public class ContaService {
     }
 
     public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException {
-        LOGGER.info("Iniciando a aplicação de taxa ou rendimento na conta com ID: {}", idConta);
+        LOGGER.info("Iniciando a aplicação de taxa na conta com ID: {}", idConta);
         Conta conta;
         try {
             conta = contaDAO.buscarContaPorId(idConta);
@@ -101,13 +106,11 @@ public class ContaService {
 
         double valorAplicado;
 
-        // Verificação para aplicar a taxa de manutenção
-        if (aplicarTaxa) {
+         if (aplicarTaxa) {
             if (tipoConta == TipoConta.CORRENTE && conta instanceof ContaCorrente contaCorrente) {
                 Cliente cliente = contaCorrente.getCliente();
                 valorAplicado = taxaService.taxaManutencaoCC(cliente, contaCorrente);
                 contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
-                ContaCorrenteDAO contaCorrenteDAO = new ContaCorrenteDAO(dataSource);
                 contaCorrenteDAO.atualizarConta(contaCorrente);
                 LOGGER.info("Taxa de manutenção aplicada na conta corrente. Valor aplicado: {}", valorAplicado);
             } else {
@@ -119,7 +122,6 @@ public class ContaService {
                 Cliente cliente = contaPoupanca.getCliente();
                 valorAplicado = taxaService.taxaManutencaoCP(cliente, contaPoupanca);
                 contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);
-                ContaPoupancaDAO contaPoupancaDAO = new ContaPoupancaDAO(dataSource);
                 contaPoupancaDAO.atualizarConta(contaPoupanca);
                 LOGGER.info("Rendimento aplicado na conta poupança. Valor aplicado: {}", valorAplicado);
 
