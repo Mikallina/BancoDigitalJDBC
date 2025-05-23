@@ -5,9 +5,12 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_conta_corrente`(
 BEGIN
         INSERT INTO conta_corrente (
 			id_conta,
-			taxa_manutencao
-		) VALUES (
+            taxa_manutencao
+            )
+		VALUES (
 			p_id_conta,
-			p_taxa_manutencao
-      );
+            p_taxa_manutencao
+            )
+		ON DUPLICATE KEY UPDATE
+			taxa_manutencao = p_taxa_manutencao;
 END

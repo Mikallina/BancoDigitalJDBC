@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
@@ -11,21 +12,20 @@ public class ContaPoupancaDAO {
 
     private final DataSource dataSource;
 
+    @Autowired
     public ContaPoupancaDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
 
     public void atualizarConta(ContaPoupanca contaPoupanca) throws SQLException {
-
         try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt = conn.prepareCall("{CALL atualizar_conta_poupanca(?, ?)}")){
+             CallableStatement stmt = conn.prepareCall("{CALL atualizar_conta_poupanca(?, ?)}")) {
 
-            stmt.setDouble(1, contaPoupanca.setTaxaRendimento());
-            stmt.setLong(2, contaPoupanca.getIdConta());
+            stmt.setLong(1, contaPoupanca.getIdConta());
+            stmt.setDouble(2, contaPoupanca.getTaxaRendimento());
 
             stmt.executeUpdate();
         }
     }
-
 }

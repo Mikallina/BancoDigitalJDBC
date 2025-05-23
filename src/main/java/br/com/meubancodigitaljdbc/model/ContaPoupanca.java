@@ -12,10 +12,11 @@ public class ContaPoupanca extends Conta {
 
     }
 
-    public double setTaxaRendimento() {
+    public void setTaxaRendimento(double taxaRendimento) {
         this.taxaRendimento = taxaRendimento;
-        return 0;
     }
 
-
+    public double getTaxaRendimento() {
+        return taxaRendimento;
+    }
 }

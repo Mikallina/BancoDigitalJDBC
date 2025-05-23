@@ -235,10 +235,10 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "Rendimento aplicado com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro ao aplicar rendimentos")
     @PutMapping("/{idConta}/rendimentos")
-    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, TipoConta tipoConta, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.aplicarTaxaOuRendimento(idConta, tipoConta, false);
+        contaService.aplicarTaxaOuRendimento(idConta, TipoConta.POUPANCA, false);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;

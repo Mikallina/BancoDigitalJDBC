@@ -114,9 +114,6 @@ public class ContaService {
                 contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
                 contaCorrenteDAO.atualizarConta(contaCorrente);
                 LOGGER.info("Taxa de manutenção aplicada na conta corrente. Valor aplicado: {}", valorAplicado);
-            } else {
-                LOGGER.error("Este endpoint é apenas para contas correntes");
-                throw new IllegalArgumentException("Este endpoint é apenas para contas correntes");
             }
         } else {
             if (tipoConta == TipoConta.POUPANCA && conta instanceof ContaPoupanca contaPoupanca) {
