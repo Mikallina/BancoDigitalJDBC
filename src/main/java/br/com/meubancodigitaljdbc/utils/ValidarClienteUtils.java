@@ -16,13 +16,6 @@ public class ValidarClienteUtils {
                 nome.matches("[a-zA-Z ]+");
     }
 
-    public static boolean validarEndereco(Endereco endereco) {
-        return endereco != null &&
-                !endereco.getLogradouro().isEmpty() &&
-                endereco.getNumero() != null &&
-                !endereco.getBairro().isEmpty() &&
-                !endereco.getLocalidade().isEmpty();
-    }
 
     public static boolean validarDataNascimento(LocalDate dataNascimento) {
         if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now())) {
@@ -30,6 +23,8 @@ public class ValidarClienteUtils {
         }
         return calcularIdade(dataNascimento) >= 18;
     }
+
+
 
     private static int calcularIdade(LocalDate dataNascimento) {
         LocalDate hoje = LocalDate.now();

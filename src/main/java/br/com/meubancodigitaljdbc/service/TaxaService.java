@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.service;
 
+import br.com.meubancodigitaljdbc.enuns.Categoria;
 import br.com.meubancodigitaljdbc.model.Cliente;
 import br.com.meubancodigitaljdbc.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.model.ContaPoupanca;
@@ -11,15 +12,15 @@ public class TaxaService {
     public double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC) {
         double taxaManutencao = 0;
 
-        if (cliente.getCategoria().getDescricao().equals("Comum")) {
+        if (cliente.getCategoria().equals(Categoria.COMUM)) {
 
             taxaManutencao = 12;
 
-        } else if (cliente.getCategoria().getDescricao().equals("Super")) {
+        } else if (cliente.getCategoria().equals(Categoria.SUPER)) {
 
             taxaManutencao = 8;
 
-        } else {
+        } else if (cliente.getCategoria().equals(Categoria.PREMIUM)){
             taxaManutencao = 2;
         }
 
@@ -35,15 +36,15 @@ public class TaxaService {
         double taxaRendimento = 0;
         double saldoAtual = contaP.getSaldo();
 
-        if (cliente.getCategoria().getDescricao().equals("Comum")) {
+        if (cliente.getCategoria().equals(Categoria.COMUM)) {
 
             taxaRendimento = 0.5;
 
-        } else if (cliente.getCategoria().getDescricao().equals("Super")) {
+        } else if (cliente.getCategoria().equals(Categoria.SUPER)) {
 
             taxaRendimento = 0.7;
 
-        } else {
+        } else if (cliente.getCategoria().equals(Categoria.COMUM)) {
             taxaRendimento = 0.9;
         }
 

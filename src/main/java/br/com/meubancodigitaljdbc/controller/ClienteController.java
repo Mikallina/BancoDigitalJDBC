@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -51,14 +51,17 @@ public class ClienteController {
     ) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
+        LOGGER.info("Cliente recebido no controller: cpf={}, nome={}", cliente.getCpf(), cliente.getNome());
+
         clienteService.salvarCliente(cliente, false);
+
 
         LOGGER.info("Adicionar cliente: {} ", cliente);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.status(201).body("Cliente criado cmo Sucesso");
+        return ResponseEntity.status(201).body("Cliente criado com Sucesso");
     }
 
     @Operation(

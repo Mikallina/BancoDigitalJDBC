@@ -30,22 +30,37 @@ public class ClienteService {
     }
 
     public boolean salvarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException, SQLException {
-        LOGGER.info("Recebido cliente: nome={}, cpf={}, nascimento={}, endereco={}",
-                cliente.getNome(),
-                cliente.getCpf(),
-                cliente.getDataNascimento(),
-                cliente.getEndereco()
-        );
+        Integer numero = cliente.getEndereco().getNumero();
+        String complemento = cliente.getEndereco().getComplemento();
 
+        Endereco enderecoViaCep = cepService.buscarEnderecoPorCep(cliente.getEndereco().getCep());
+
+        if (enderecoViaCep != null) {
+            enderecoViaCep.setNumero(numero);
+            enderecoViaCep.setComplemento(complemento);
+            cliente.setEndereco(enderecoViaCep);
+        }
 
         LOGGER.info("Iniciando processo de {} do cliente com CPF: {}", isAtualizar ? "atualização" : "criação", cliente.getCpf());
 
-        validarCliente(cliente, isAtualizar);
+        if (!validarCpf(cliente.getCpf(), isAtualizar, cliente.getIdCliente())) {
+            throw new ClienteInvalidoException("CPF inválido ou já cadastrado.");
+        }
+        if (!ValidarClienteUtils.validarNome(cliente.getNome())) {
+            throw new ClienteInvalidoException("Nome inválido.");
+        }
+        if (!ValidarClienteUtils.validarDataNascimento(cliente.getDataNascimento())) {
+            throw new ClienteInvalidoException("Data de nascimento inválida.");
+        }
+
+        // Salva o cliente
         clienteDAO.save(cliente);
 
         LOGGER.info("Cliente com CPF {} {} com sucesso.", cliente.getCpf(), isAtualizar ? "atualizado" : "cadastrado");
         return isAtualizar;
     }
+
+
 
 
     public Cliente buscarClientePorCpf(String cpf) {
@@ -76,27 +91,6 @@ public class ClienteService {
         LOGGER.info("Cliente com ID {} deletado com sucesso", clienteId);
     }
 
-    private void validarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException {
-        if (!validarCpf(cliente.getCpf(), isAtualizar, cliente.getIdCliente())) {
-            LOGGER.error("Validação de CPF falhou: {}", cliente.getCpf());
-            throw new ClienteInvalidoException("CPF inválido ou já cadastrado.");
-        }
-        if (!ValidarClienteUtils.validarNome(cliente.getNome())) {
-            LOGGER.error("Validação de nome falhou: {}", cliente.getNome());
-            throw new ClienteInvalidoException("Nome inválido.");
-        }
-        if (!ValidarClienteUtils.validarEndereco(cliente.getEndereco())) {
-            LOGGER.error("Validação de endereço falhou: {}", cliente.getEndereco());
-            throw new ClienteInvalidoException("Endereço inválido.");
-        }
-        if (!ValidarClienteUtils.validarDataNascimento(cliente.getDataNascimento())) {
-            LOGGER.error("Validação de data de nascimento falhou: {}", cliente.getDataNascimento());
-            throw new ClienteInvalidoException("Data de nascimento inválida.");
-        }
-
-        LOGGER.debug("Validação do cliente concluída com sucesso.");
-
-    }
 
 
     public Cliente atualizarCliente(Long id, Cliente cliente) throws Exception {
@@ -110,18 +104,23 @@ public class ClienteService {
     }
 
 
-
     public boolean validarCpf(String cpf, boolean isAtualizar, Long clienteId) {
         if (!ValidaCpfUtils.isCPF(cpf)) {
             return false;
         }
-        Cliente clienteExistente = clienteDAO.findByCpf(cpf);
-
         if (isAtualizar) {
-            return clienteExistente == null || clienteExistente.getIdCliente().equals(clienteId);
+            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+
+            if (clienteExistente != null && !clienteExistente.getIdCliente().equals(clienteId)) {
+                return false;
+            }
         } else {
-            return clienteExistente == null;
+            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+            if (clienteExistente != null) {
+                return false;
+            }
         }
+        return true;
     }
 
 }

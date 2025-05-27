@@ -1,8 +1,10 @@
 package br.com.meubancodigitaljdbc.config;
 
 import br.com.meubancodigitaljdbc.mapper.ContaRowMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AppConfig {
@@ -16,5 +18,8 @@ public class AppConfig {
         return new ContaRowMapper();
     }
 
-
+    @Bean
+    public Jackson2ObjectMapperBuilder jacksonBuilder() {
+        return new Jackson2ObjectMapperBuilder().modules(new JavaTimeModule());
+    }
 }

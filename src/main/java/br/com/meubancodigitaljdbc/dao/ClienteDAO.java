@@ -2,6 +2,7 @@ package br.com.meubancodigitaljdbc.dao;
 
 import br.com.meubancodigitaljdbc.mapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.model.Cliente;
+import br.com.meubancodigitaljdbc.model.Endereco;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
@@ -21,7 +22,7 @@ public class ClienteDAO {
         this.rowMapper = rowMapper;
     }
 
-    public void save(Cliente cliente) throws SQLException {
+    public Cliente save(Cliente cliente) throws SQLException {
 
         try (Connection conn = dataSource.getConnection();
              CallableStatement stmt = conn.prepareCall("{CALL salvar_cliente(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
@@ -44,6 +45,7 @@ public class ClienteDAO {
             long idGerado = stmt.getLong(12);
             cliente.setIdCliente(idGerado);
         }
+        return cliente;
     }
 
     public Cliente findByCpf(String cpf) {

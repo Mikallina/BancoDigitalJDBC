@@ -1,5 +1,7 @@
 package br.com.meubancodigitaljdbc.utils;
 
+import org.springframework.stereotype.Service;
+
 import java.util.InputMismatchException;
 
 

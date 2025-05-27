@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.service;
 
 import br.com.meubancodigitaljdbc.model.Endereco;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -9,6 +10,7 @@ public class CepService {
 
     private final RestTemplate restTemplate;
 
+    @Autowired
     public CepService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
