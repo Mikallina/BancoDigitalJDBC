@@ -8,6 +8,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Representa um cliente do sistema.
+ */
+
 public class Cliente {
 
     private Long idCliente;
