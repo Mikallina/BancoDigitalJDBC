@@ -1,8 +1,7 @@
 package br.com.meubancodigitaljdbc.utils;
 
-import br.com.meubancodigitaljdbc.dao.ClienteDAO;
-import br.com.meubancodigitaljdbc.model.Cliente;
-import br.com.meubancodigitaljdbc.model.Endereco;
+import br.com.meubancodigitaljdbc.adapters.output.dao.ClienteDAO;
+import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;

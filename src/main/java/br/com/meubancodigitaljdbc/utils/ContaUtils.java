@@ -1,6 +1,6 @@
 package br.com.meubancodigitaljdbc.utils;
 
-import br.com.meubancodigitaljdbc.enuns.TipoConta;
+import br.com.meubancodigitaljdbc.application.domain.enuns.TipoConta;
 import org.springframework.stereotype.Service;
 
 @Service

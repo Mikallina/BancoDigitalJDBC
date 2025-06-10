@@ -1,0 +1,156 @@
+package br.com.meubancodigitaljdbc.application.domain.model;
+
+import br.com.meubancodigitaljdbc.adapters.input.controllers.CambioController;
+import br.com.meubancodigitaljdbc.application.domain.enuns.TipoCartao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+public class CartaoCredito extends Cartao{
+
+    protected double taxa = 0.5;
+    protected LocalDate dataVencimento;
+    protected LocalDate dataCompra;
+    protected double pagamento;
+    protected double saldoCredito;
+    protected double saldoMes;
+    protected String diaVencimento;
+
+    private double limiteCredito;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
+
+    public CartaoCredito() {
+    }
+
+    public CartaoCredito(Conta conta, int senha, String numCartao, TipoCartao tipoCartao, double limite, String diaVencimento, LocalDate dataVencimento) {
+        super();
+        this.setConta(conta);
+        this.setSenha(senha);
+        this.setNumCartao(numCartao);
+        this.setTipoCartao(tipoCartao);
+        this.setLimiteCredito(limite);
+        this.setDiaVencimento(diaVencimento);
+        this.setDataVencimento(dataVencimento);
+    }
+
+    public void alterarLimiteCredito(double novoLimite) {
+        this.limiteCredito = novoLimite;
+
+    }
+
+    public void setDiaVencimento(String diaVencimento) {
+        this.diaVencimento = diaVencimento;
+    }
+
+    public double getLimiteCredito() {
+        return limiteCredito;
+    }
+
+    public void setSaldoCredito(double saldoCredito) {
+        this.saldoCredito = saldoCredito;
+    }
+
+    public double getSaldoMes() {
+        return this.saldoMes;
+    }
+
+    public double getTaxa() {
+        return taxa;
+    }
+
+    public void setTaxa(double taxa) {
+        this.taxa = taxa;
+    }
+
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public void setDataVencimento(LocalDate dataVencimento) {
+        this.dataVencimento = dataVencimento;
+    }
+
+    public LocalDate getDataCompra() {
+        return dataCompra;
+    }
+
+    public void setDataCompra(LocalDate dataCompra) {
+        this.dataCompra = dataCompra;
+    }
+
+    public double getPagamento() {
+        return pagamento;
+    }
+
+    public void setPagamento(double pagamento) {
+        this.pagamento = pagamento;
+    }
+
+    public void setSaldoMes(double saldoMes) {
+        this.saldoMes = saldoMes;
+    }
+
+    public void setLimiteCredito(double limiteCredito) {
+        this.limiteCredito = limiteCredito;
+    }
+
+    public String getDiaVencimento() {
+        return diaVencimento;
+    }
+
+
+    public boolean novoCiclo() {
+        long diaUltimaCompra = ChronoUnit.DAYS.between(dataVencimento, dataCompra);
+        return diaUltimaCompra >= 30;
+    }
+
+    public void realizarPagamentos() {
+        if (!verificarStatus()) {
+           LOGGER.info("Cartão desativado");
+            return;
+        }
+
+        if (novoCiclo()) {
+            saldoMes = 0;
+            LOGGER.info("Novo ciclo iniciado...");
+            dataCompra = LocalDate.now();
+        }
+
+        if (saldoMes + pagamento <= saldoCredito) {
+            saldoMes += pagamento;
+            saldoCredito -= pagamento + (pagamento * taxa);
+            LOGGER.info("Pagamento realizado com sucesso");
+        } else {
+            LOGGER.warn("Limite de Crédito excedido");
+        }
+    }
+
+    public boolean realizarCompra(double valor, LocalDate data) {
+        if (valor <= 0 || valor > this.limiteCredito) {
+            return false;
+        }
+
+        this.saldoMes += valor;
+        this.saldoCredito = this.limiteCredito - valor;
+        this.pagamento += valor;
+        this.dataCompra = data;
+
+        return true;
+    }
+
+
+    public boolean pagarFatura(double valorPagamento) {
+        if (valorPagamento <= 0 || valorPagamento > this.saldoMes) {
+            return false;
+        }
+
+        this.saldoMes -= valorPagamento;
+        this.saldoCredito += valorPagamento;
+
+        return true;
+    }
+
+
+}

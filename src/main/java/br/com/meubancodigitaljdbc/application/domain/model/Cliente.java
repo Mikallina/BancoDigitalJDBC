@@ -1,0 +1,130 @@
+package br.com.meubancodigitaljdbc.application.domain.model;
+
+import br.com.meubancodigitaljdbc.application.domain.enuns.Categoria;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Representa um cliente do sistema.
+ */
+
+public class Cliente {
+
+    private Long idCliente;
+    private String nome;
+    private String cpf;
+    @JsonFormat(pattern = "dd-MM-yyyy")
+    private LocalDate dataNascimento;
+    private Endereco endereco;
+    private Categoria categoria;
+
+    private String email;
+    private List<Conta> contas = new ArrayList<Conta>();
+
+
+    public Cliente (){}
+
+
+    public Cliente(String nome, String cpf, LocalDate dataNascimento, Endereco endereco, Categoria categoria) {
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+        this.endereco = endereco;
+        this.categoria = categoria;
+        this.contas = new ArrayList<Conta>();
+    }
+
+    public Cliente(Long idCliente, String nome, String cpf, LocalDate dataNascimento,
+                   Endereco endereco, Categoria categoria, List<Conta> contas) {
+        super();
+        this.idCliente = idCliente;
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+        this.endereco = endereco;
+        this.categoria = categoria;
+        this.contas = contas;
+    }
+
+
+    public Long getIdCliente() {
+        return idCliente;
+    }
+
+    public void setIdCliente(Long idCliente) {
+        this.idCliente = idCliente;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
+
+    public Endereco getEndereco() {
+        return endereco;
+    }
+
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
+    }
+
+    public Categoria getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
+    }
+
+    public List<Conta> getContas() {
+        return contas;
+    }
+
+    public void setContas(List<Conta> contas) {
+        this.contas = contas;
+    }
+
+    public void addConta(Conta conta) {
+        this.contas.add(conta);
+        conta.setCliente(this);
+    }
+
+    public Conta buscarContaPorNumero(String numConta) {
+        for (Conta conta : contas) {
+            if (conta.getNumConta().equals(numConta)) {
+                return conta;
+            }
+        }
+        return null;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
