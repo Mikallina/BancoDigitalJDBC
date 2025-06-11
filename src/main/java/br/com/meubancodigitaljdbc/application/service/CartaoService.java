@@ -8,6 +8,7 @@ import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CartaoUserCase;
 import br.com.meubancodigitaljdbc.utils.CartaoUtils;
 import br.com.meubancodigitaljdbc.utils.CategoriaLimiteUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 
 @Service
-public class CartaoService {
+public class CartaoService implements CartaoUserCase {
 
     private final CartaoDAO cartaoDAO;
 
@@ -73,7 +74,7 @@ public class CartaoService {
     }
 
 
-    private Cartao criarCartaoCredito(Conta conta, int senha, String numCartao, String diaVencimento) {
+    public Cartao criarCartaoCredito(Conta conta, int senha, String numCartao, String diaVencimento) {
         double limiteCredito = CategoriaLimiteUtils.limiteCredito(conta.getCliente().getCategoria());
         LocalDate dataVencimento = calcularDataVencimento(diaVencimento);
 
@@ -88,7 +89,7 @@ public class CartaoService {
         );
     }
 
-    private Cartao criarCartaoDebito(Conta conta, int senha, String numCartao) {
+    public Cartao criarCartaoDebito(Conta conta, int senha, String numCartao) {
         double limiteDiario = CategoriaLimiteUtils.limiteDiario(conta.getCliente().getCategoria());
 
         return new CartaoDebito(
@@ -101,7 +102,7 @@ public class CartaoService {
     }
 
 
-    private LocalDate calcularDataVencimento(String diaVencimento) {
+    public LocalDate calcularDataVencimento(String diaVencimento) {
         if (diaVencimento == null) {
             throw new IllegalArgumentException("Erro: O dia de vencimento é obrigatório para cartões de crédito.");
         }
@@ -181,7 +182,7 @@ public class CartaoService {
     }
 
 
-    private Cartao validarCartao(String numCartao, boolean checarStatusAtivo)
+    public Cartao validarCartao(String numCartao, boolean checarStatusAtivo)
             throws CartaoNuloException, CartaoStatusException, SQLException {
 
         Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumeroCartao(numCartao));
@@ -299,10 +300,9 @@ public class CartaoService {
     public void consultarFatura(String numCartao) throws SQLException {
         Cartao cartao = cartaoDAO.buscarPorNumeroCartao(numCartao);
 
-        if (!(cartao instanceof CartaoCredito)) {
+        if (!(cartao instanceof CartaoCredito cartaoCredito)) {
             throw new IllegalArgumentException("Cartão não é de crédito ou não encontrado");
         }
-        CartaoCredito cartaoCredito = (CartaoCredito) cartao;
         LOGGER.info("Fatura atual do cartão {}: {}", numCartao, cartaoCredito.getSaldoMes());
     }
 

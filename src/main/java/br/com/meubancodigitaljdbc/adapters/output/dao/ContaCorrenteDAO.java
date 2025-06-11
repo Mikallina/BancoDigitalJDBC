@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaCorrenteRepositoryPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -8,7 +9,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 
 @Repository
-public class ContaCorrenteDAO {
+public class ContaCorrenteDAO implements ContaCorrenteRepositoryPort {
     private final DataSource dataSource;
     @Autowired
     public ContaCorrenteDAO(DataSource dataSource) {

@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.application.service;
 
-import br.com.meubancodigitaljdbc.client.CambioClient;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CambioUserCase;
+import br.com.meubancodigitaljdbc.adapters.output.resttemplate.CambioClient;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.CambioException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
-public class CambioService {
+public class CambioService implements CambioUserCase {
 
 
     @Value("${api.cambio.url}")

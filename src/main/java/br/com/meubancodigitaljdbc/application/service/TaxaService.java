@@ -4,10 +4,11 @@ import br.com.meubancodigitaljdbc.application.domain.enuns.Categoria;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.TaxaUserCase;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TaxaService {
+public class TaxaService implements TaxaUserCase {
 
     public double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC) {
         double taxaManutencao = 0;
@@ -44,7 +45,7 @@ public class TaxaService {
 
             taxaRendimento = 0.7;
 
-        } else if (cliente.getCategoria().equals(Categoria.COMUM)) {
+        } else if (cliente.getCategoria().equals(Categoria.PREMIUM)) {
             taxaRendimento = 0.9;
         }
 

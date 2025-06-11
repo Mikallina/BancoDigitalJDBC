@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
-import br.com.meubancodigitaljdbc.application.domain.mapper.CartaoRowMapper;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.CartaoRepositoryPort;
+import br.com.meubancodigitaljdbc.adapters.output.mapper.CartaoRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoDebito;
@@ -17,12 +18,10 @@ import java.util.Optional;
 
 
 @Repository
-public class CartaoDAO {
+public class CartaoDAO implements CartaoRepositoryPort {
 
     private final DataSource dataSource;
     private final ContaDAO contaDAO;
-
-    private CartaoRowMapper rowMapper;
 
     @Autowired
     public CartaoDAO(DataSource dataSource, ContaDAO contaDAO) {

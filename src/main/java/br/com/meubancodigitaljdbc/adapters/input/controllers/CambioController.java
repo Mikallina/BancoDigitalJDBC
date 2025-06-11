@@ -49,7 +49,6 @@ public class CambioController {
 
         long tempoInicio = System.currentTimeMillis();
 
-        // Chamando o serviço de conversão de moedas
         double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
 
         LOGGER.info("Conversão de moedas: Moeda Base: {} Moeda Destino: {} ", moedaBase, moedaDestino);

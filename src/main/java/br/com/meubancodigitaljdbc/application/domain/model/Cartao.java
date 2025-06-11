@@ -21,14 +21,6 @@ public abstract class Cartao {
     protected Cartao() {
 
     }
-    protected Cartao(String numCartao, Conta conta, TipoCartao tipoCartao, int senha, boolean status) {
-        super();
-        this.numCartao = numCartao;
-        this.conta = conta;
-        this.tipoCartao = tipoCartao;
-        this.senha = senha;
-        this.status = status;
-    }
 
     public double getFatura() {
         return fatura;

@@ -16,14 +16,8 @@ public class DepositoDTO {
 
 	}
 
-
 	public String getNumContaDestino() {
 		return numContaDestino;
-	}
-
-
-	public void setNumContaDestino(String numContaDestino) {
-		this.numContaDestino = numContaDestino;
 	}
 
 	public String getCpf() {
@@ -37,17 +31,11 @@ public class DepositoDTO {
 	public Double getValor() {
 		return valor;
 	}
+
 	public void setValor(Double valor) {
 		this.valor = valor;
 	}
 
-	public DepositoDTO(String cpf, Double valor, String numContaDestino) {
-		super();
-		this.cpf = cpf;
-		this.valor = valor;
-		this.numContaDestino = numContaDestino;
-	}
-    
     
 
 }

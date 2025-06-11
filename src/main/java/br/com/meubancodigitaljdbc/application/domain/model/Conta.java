@@ -2,17 +2,9 @@ package br.com.meubancodigitaljdbc.application.domain.model;
 
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoConta;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class Conta {
 
-    public List<Cartao> getCartoes() {
-        return cartoes;
-    }
-    public void setCartoes(List<Cartao> cartoes) {
-        this.cartoes = cartoes;
-    }
+
     protected Cliente cliente;
     protected Long idConta;
     protected int agencia;
@@ -20,7 +12,7 @@ public abstract class Conta {
     protected double saldo;
     protected TipoConta tipoConta;
 
-    private List<Cartao> cartoes = new ArrayList<Cartao>();
+
     public Conta() {
 
     }
@@ -32,8 +24,7 @@ public abstract class Conta {
         this.saldo = 0;
     }
 
-    public Conta(Cliente cliente, Long idConta, int agencia, String numConta, double saldo, TipoConta tipoConta,
-                 List<Cartao> cartoes) {
+    public Conta(Cliente cliente, Long idConta, int agencia, String numConta, double saldo, TipoConta tipoConta) {
         super();
         this.cliente = cliente;
         this.idConta = idConta;
@@ -41,7 +32,7 @@ public abstract class Conta {
         this.numConta = numConta;
         this.saldo = saldo;
         this.tipoConta = tipoConta;
-        this.cartoes = cartoes;
+
     }
 
 

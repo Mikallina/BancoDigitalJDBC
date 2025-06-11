@@ -11,23 +11,21 @@ import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.ContaUserCase;
 import br.com.meubancodigitaljdbc.utils.ContaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 
 @Service
-public class ContaService {
+public class ContaService implements ContaUserCase {
 
     private final ContaDAO contaDAO;
-
-    private final DataSource dataSource;
 
     private final TaxaService taxaService;
 
@@ -37,10 +35,9 @@ public class ContaService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContaService.class);
 
-    @Autowired
-    public ContaService(ContaDAO contaDAO, DataSource dataSource, TaxaService taxaService, ContaCorrenteDAO contaCorrenteDAO, ContaPoupancaDAO contaPoupancaDAO) {
+
+    public ContaService(ContaDAO contaDAO, TaxaService taxaService, ContaCorrenteDAO contaCorrenteDAO, ContaPoupancaDAO contaPoupancaDAO) {
         this.contaDAO = contaDAO;
-        this.dataSource = dataSource;
         this.taxaService = taxaService;
         this.contaCorrenteDAO = contaCorrenteDAO;
         this.contaPoupancaDAO = contaPoupancaDAO;
@@ -169,7 +166,7 @@ public class ContaService {
     }
 
     public boolean realizarTransferencia(double valor, String numContaOrigem, String numContaDestino,
-                                         boolean transferenciaPoupança, boolean transferenciaPix, boolean transferenciaOutrasContas) throws SQLException {
+                                         boolean transferenciaPoupanca, boolean transferenciaPix, boolean transferenciaOutrasContas) throws SQLException {
         LOGGER.info("Iniciando a operação de transferência de {} para a conta de destino: {}", valor, numContaDestino);
 
         Conta contaOrigem = contaDAO.buscarPorNumero(numContaOrigem);
@@ -190,7 +187,7 @@ public class ContaService {
             throw new IllegalArgumentException("Saldo insuficiente.");
         }
 
-        if (transferenciaPoupança || transferenciaOutrasContas) {
+        if (transferenciaPoupanca || transferenciaOutrasContas) {
             if (contaDestino == null) {
                 throw new IllegalArgumentException("Conta de destino não encontrada.");
             }
@@ -209,7 +206,7 @@ public class ContaService {
 
         LOGGER.info("Saldo atualizado para a conta origem (ID: {}): {}", contaOrigem.getIdConta(), contaOrigem.getSaldo());
 
-        if (contaDestino != null && (transferenciaPoupança || transferenciaOutrasContas)) {
+        if (contaDestino != null && (transferenciaPoupanca || transferenciaOutrasContas)) {
             contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
             LOGGER.info("Saldo atualizado para a conta destino ID: {}): {}", contaDestino.getIdConta(), contaDestino.getSaldo());
         }

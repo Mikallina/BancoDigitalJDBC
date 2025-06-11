@@ -1,6 +1,7 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
-import br.com.meubancodigitaljdbc.application.domain.mapper.ClienteRowMapper;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ClienteRepositoryPort;
+import br.com.meubancodigitaljdbc.adapters.output.mapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -11,10 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class ClienteDAO {
+public class ClienteDAO implements ClienteRepositoryPort {
 
     private final DataSource dataSource;
-    private ClienteRowMapper rowMapper;
+    private final ClienteRowMapper rowMapper;
     @Autowired
     public ClienteDAO(DataSource dataSource, ClienteRowMapper rowMapper){
         this.dataSource = dataSource;

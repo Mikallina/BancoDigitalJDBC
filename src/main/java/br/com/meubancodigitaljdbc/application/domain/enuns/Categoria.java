@@ -4,7 +4,7 @@ public enum Categoria {
 
     COMUM,
     SUPER,
-    PREMIUM;
+    PREMIUM
 
   
 }

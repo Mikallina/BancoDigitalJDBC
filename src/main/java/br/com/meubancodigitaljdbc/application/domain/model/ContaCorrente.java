@@ -28,10 +28,4 @@ public class ContaCorrente extends Conta {
         return "ContaCorrente [cliente=" + cliente + ", agencia=" + agencia + ", numConta=" + numConta + "]";
     }
 
-
-    public ContaCorrente(double taxaManutencao) {
-        super();
-        this.taxaManutencao = taxaManutencao;
-    }
-
 }

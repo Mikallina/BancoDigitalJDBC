@@ -26,27 +26,6 @@ public class CartaoDebito extends Cartao{
 
     }
 
-    public void realizarPagamento(double pagamento) {
-        if (!verificarStatus()) {
-            System.out.println("Cartão Desativado.");
-            return;
-        }
-        if (conta.getSaldo() >= pagamento && totalPgtoHoje + pagamento <= limiteDiario) {
-            totalPgtoHoje += pagamento;
-            double result = conta.getSaldo() - pagamento + (pagamento * taxa);
-            System.out.println("Pagamento Efetuado com sucesso" + result);
-
-        } else if (conta.getSaldo() < pagamento) {
-            System.out.println("Saldo Insuficente...");
-        } else {
-            System.out.println("Limite diário excedido....");
-        }
-    }
-
-    public void alterarLimiteDiario(double novoLimite) {
-        this.limiteDiario = novoLimite;
-    }
-
 
     public double getTaxa() {
         return taxa;

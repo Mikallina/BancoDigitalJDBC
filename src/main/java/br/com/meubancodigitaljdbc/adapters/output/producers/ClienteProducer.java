@@ -3,7 +3,7 @@ package br.com.meubancodigitaljdbc.adapters.output.producers;
 
 import br.com.meubancodigitaljdbc.application.domain.dto.EmailDTO;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
-import br.com.meubancodigitaljdbc.configs.RabbitMQConfig;
+import br.com.meubancodigitaljdbc.infrastructure.configs.RabbitMQConfig;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;

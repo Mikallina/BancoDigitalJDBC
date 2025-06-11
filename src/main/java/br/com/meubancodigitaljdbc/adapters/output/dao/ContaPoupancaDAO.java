@@ -2,13 +2,14 @@ package br.com.meubancodigitaljdbc.adapters.output.dao;
 
 
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaPoupancaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
 
 @Repository
-public class ContaPoupancaDAO {
+public class ContaPoupancaDAO implements ContaPoupancaRepository {
 
     private final DataSource dataSource;
 

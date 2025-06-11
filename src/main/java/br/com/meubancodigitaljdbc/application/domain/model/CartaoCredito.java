@@ -1,12 +1,9 @@
 package br.com.meubancodigitaljdbc.application.domain.model;
 
-import br.com.meubancodigitaljdbc.adapters.input.controllers.CambioController;
+
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoCartao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 public class CartaoCredito extends Cartao{
 
@@ -17,9 +14,7 @@ public class CartaoCredito extends Cartao{
     protected double saldoCredito;
     protected double saldoMes;
     protected String diaVencimento;
-
     private double limiteCredito;
-    private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
 
     public CartaoCredito() {
     }
@@ -48,9 +43,6 @@ public class CartaoCredito extends Cartao{
         return limiteCredito;
     }
 
-    public void setSaldoCredito(double saldoCredito) {
-        this.saldoCredito = saldoCredito;
-    }
 
     public double getSaldoMes() {
         return this.saldoMes;
@@ -100,32 +92,6 @@ public class CartaoCredito extends Cartao{
         return diaVencimento;
     }
 
-
-    public boolean novoCiclo() {
-        long diaUltimaCompra = ChronoUnit.DAYS.between(dataVencimento, dataCompra);
-        return diaUltimaCompra >= 30;
-    }
-
-    public void realizarPagamentos() {
-        if (!verificarStatus()) {
-           LOGGER.info("Cartão desativado");
-            return;
-        }
-
-        if (novoCiclo()) {
-            saldoMes = 0;
-            LOGGER.info("Novo ciclo iniciado...");
-            dataCompra = LocalDate.now();
-        }
-
-        if (saldoMes + pagamento <= saldoCredito) {
-            saldoMes += pagamento;
-            saldoCredito -= pagamento + (pagamento * taxa);
-            LOGGER.info("Pagamento realizado com sucesso");
-        } else {
-            LOGGER.warn("Limite de Crédito excedido");
-        }
-    }
 
     public boolean realizarCompra(double valor, LocalDate data) {
         if (valor <= 0 || valor > this.limiteCredito) {

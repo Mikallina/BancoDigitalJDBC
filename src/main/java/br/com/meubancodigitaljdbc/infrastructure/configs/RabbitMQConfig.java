@@ -1,4 +1,4 @@
-package br.com.meubancodigitaljdbc.configs;
+package br.com.meubancodigitaljdbc.infrastructure.configs;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -5,6 +5,7 @@ import br.com.meubancodigitaljdbc.adapters.output.producers.ClienteProducer;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Endereco;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.ClienteUserCase;
 import br.com.meubancodigitaljdbc.utils.ValidaCpfUtils;
 import br.com.meubancodigitaljdbc.utils.ValidarClienteUtils;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ClienteService {
+public class ClienteService implements ClienteUserCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteService.class);
 
@@ -36,7 +37,7 @@ public class ClienteService {
 
     @Transactional
     public Cliente salvarCliente(Cliente cliente, boolean isAtualizar) throws ClienteInvalidoException, SQLException {
-        Integer numero = cliente.getEndereco().getNumero();
+        int numero = cliente.getEndereco().getNumero();
         String complemento = cliente.getEndereco().getComplemento();
 
         Endereco enderecoViaCep = cepService.buscarEnderecoPorCep(cliente.getEndereco().getCep());
@@ -84,6 +85,8 @@ public class ClienteService {
         return clienteDAO.findAll();
     }
 
+
+    @Override
     public Optional<Cliente> findById(Long clienteId) {
         LOGGER.info("Buscando cliente por ID: {}", clienteId);
         return clienteDAO.findById(clienteId);
@@ -111,7 +114,7 @@ public class ClienteService {
         cliente.setIdCliente(id);
 
         clienteDAO.update(cliente);
-        return cliente;
+        return existente;
     }
 
 
@@ -119,19 +122,13 @@ public class ClienteService {
         if (!ValidaCpfUtils.isCPF(cpf)) {
             return false;
         }
+        Cliente clienteExistente = clienteDAO.findByCpf(cpf);
         if (isAtualizar) {
-            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
 
-            if (clienteExistente != null && !clienteExistente.getIdCliente().equals(clienteId)) {
-                return false;
-            }
+            return clienteExistente == null || clienteExistente.getIdCliente().equals(clienteId);
         } else {
-            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
-            if (clienteExistente != null) {
-                return false;
-            }
+            return clienteExistente == null;
         }
-        return true;
     }
 
 }

@@ -22,7 +22,7 @@ public class Cliente {
     private Categoria categoria;
 
     private String email;
-    private List<Conta> contas = new ArrayList<Conta>();
+    private List<Conta> contas = new ArrayList<>();
 
 
     public Cliente (){}
@@ -34,7 +34,7 @@ public class Cliente {
         this.dataNascimento = dataNascimento;
         this.endereco = endereco;
         this.categoria = categoria;
-        this.contas = new ArrayList<Conta>();
+        this.contas = new ArrayList<>();
     }
 
     public Cliente(Long idCliente, String nome, String cpf, LocalDate dataNascimento,
@@ -98,33 +98,13 @@ public class Cliente {
         this.categoria = categoria;
     }
 
-    public List<Conta> getContas() {
-        return contas;
-    }
-
     public void setContas(List<Conta> contas) {
         this.contas = contas;
     }
 
-    public void addConta(Conta conta) {
-        this.contas.add(conta);
-        conta.setCliente(this);
-    }
-
-    public Conta buscarContaPorNumero(String numConta) {
-        for (Conta conta : contas) {
-            if (conta.getNumConta().equals(numConta)) {
-                return conta;
-            }
-        }
-        return null;
-    }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
 }

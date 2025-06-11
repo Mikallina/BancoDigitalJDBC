@@ -1,7 +1,8 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
 
-import br.com.meubancodigitaljdbc.application.domain.mapper.ContaRowMapper;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaRepositoryPort;
+import br.com.meubancodigitaljdbc.adapters.output.mapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class ContaDAO {
+public class ContaDAO implements ContaRepositoryPort {
 
     private final ClienteDAO clienteDAO;
     private final DataSource dataSource;
@@ -154,47 +155,6 @@ public class ContaDAO {
         }
     }
 
-
-/*
-
-    // Método para buscar todas as contas
-    public List<Conta> findAll() {
-
-        List<Conta> contas = new ArrayList<>();
-
-        try (Connection conn = dataSource.getConnection();
-             CallableStatement stmt = conn.prepareCall("{CALL listar_contas()}");
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String tipoConta = rs.getString("tipo_conta");
-                Conta conta = null;
-
-                switch (tipoConta) {
-                    case "CORRENTE":
-                        conta = new ContaCorrente();
-                        break;
-                    case "POUPANCA":
-                        conta = new ContaPoupanca();
-                        break;
-                    default:
-
-                        continue;
-                }
-
-                conta.setIdConta(rs.getLong("id_conta"));
-                conta.setNumConta(rs.getString("num_conta"));
-                conta.setSaldo(rs.getDouble("saldo"));
-
-                contas.add(conta);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return contas;
-    }*/
 
     public void deleteById(Long id) {
 
