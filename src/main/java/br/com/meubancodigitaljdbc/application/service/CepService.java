@@ -1,7 +1,7 @@
 package br.com.meubancodigitaljdbc.application.service;
 
 import br.com.meubancodigitaljdbc.application.domain.model.Endereco;
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.CepUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CepUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class CepService implements CepUserCase {
+public class CepService implements CepUseCase {
 
     private final RestTemplate restTemplate;
 

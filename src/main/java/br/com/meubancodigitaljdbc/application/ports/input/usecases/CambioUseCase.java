@@ -2,7 +2,7 @@ package br.com.meubancodigitaljdbc.application.ports.input.usecases;
 
 import java.util.Map;
 
-public interface CambioUserCase {
+public interface CambioUseCase {
 
     double obterCotacao(String moedaBase, String moedaDestino)throws Exception;
 

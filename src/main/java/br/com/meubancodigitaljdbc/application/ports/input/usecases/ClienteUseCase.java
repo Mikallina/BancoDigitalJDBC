@@ -6,7 +6,7 @@ import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import java.util.List;
 import java.util.Optional;
 
-public interface ClienteUserCase {
+public interface ClienteUseCase {
     Cliente salvarCliente(Cliente cliente, boolean isAtualizar) throws Exception;
     Cliente buscarClientePorCpf(String cpf);
     List<Cliente> listarClientes();

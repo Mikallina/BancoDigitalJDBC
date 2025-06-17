@@ -5,10 +5,6 @@ public class Endereco {
     private String logradouro;
     private int numero;
     private String complemento;
-    public void setLocalidade(String localidade) {
-        this.localidade = localidade;
-    }
-
     private String cep;
     private String bairro;
     private String localidade;
@@ -17,6 +13,9 @@ public class Endereco {
     public Endereco() {
     }
 
+    public void setLocalidade(String localidade) {
+        this.localidade = localidade;
+    }
     public String getLogradouro() {
         return logradouro;
     }

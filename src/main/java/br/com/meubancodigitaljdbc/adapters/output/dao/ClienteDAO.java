@@ -1,7 +1,7 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
 import br.com.meubancodigitaljdbc.application.ports.output.repository.ClienteRepositoryPort;
-import br.com.meubancodigitaljdbc.adapters.output.mapper.ClienteRowMapper;
+import br.com.meubancodigitaljdbc.adapters.output.dao.RowMapper.ClienteRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

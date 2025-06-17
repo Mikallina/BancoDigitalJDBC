@@ -1,11 +1,11 @@
 package br.com.meubancodigitaljdbc.application.service;
 
-import br.com.meubancodigitaljdbc.adapters.output.dao.ClienteDAO;
 import br.com.meubancodigitaljdbc.adapters.output.producers.ClienteProducer;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Endereco;
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.ClienteUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.ClienteUseCase;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ClienteRepositoryPort;
 import br.com.meubancodigitaljdbc.utils.ValidaCpfUtils;
 import br.com.meubancodigitaljdbc.utils.ValidarClienteUtils;
 import org.slf4j.Logger;
@@ -19,18 +19,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ClienteService implements ClienteUserCase {
+public class ClienteService implements ClienteUseCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteService.class);
 
-    private final ClienteDAO clienteDAO;
+    private final ClienteRepositoryPort clienteRepositoryPort;
     private final CepService cepService;
 
     private final ClienteProducer clienteProducer;
 
     @Autowired
-    public ClienteService(ClienteDAO clienteDAO, CepService cepService, ClienteProducer clienteProducer) {
-        this.clienteDAO = clienteDAO;
+    public ClienteService(ClienteRepositoryPort clienteRepositoryPort, CepService cepService, ClienteProducer clienteProducer) {
+        this.clienteRepositoryPort = clienteRepositoryPort;
         this.cepService = cepService;
         this.clienteProducer = clienteProducer;
     }
@@ -61,59 +61,53 @@ public class ClienteService implements ClienteUserCase {
         }
 
         // Salva o cliente
-        cliente = clienteDAO.save(cliente);
-        clienteProducer.publicarMensagemEmail(cliente);
+        cliente = clienteRepositoryPort.save(cliente);
 
         LOGGER.info("Cliente com CPF {} {} com sucesso.", cliente.getCpf(), isAtualizar ? "atualizado" : "cadastrado");
         return cliente;
 
 
-
-
     }
-
-
 
 
     public Cliente buscarClientePorCpf(String cpf) {
         LOGGER.info("Buscando cliente por CPF: {}", cpf);
-        return clienteDAO.findByCpf(cpf);
+        return clienteRepositoryPort.findByCpf(cpf);
     }
 
     public List<Cliente> listarClientes() {
         LOGGER.info("Listando todos os clientes");
-        return clienteDAO.findAll();
+        return clienteRepositoryPort.findAll();
     }
 
 
     @Override
     public Optional<Cliente> findById(Long clienteId) {
         LOGGER.info("Buscando cliente por ID: {}", clienteId);
-        return clienteDAO.findById(clienteId);
+        return clienteRepositoryPort.findById(clienteId);
     }
 
     public void deletarCliente(Long clienteId) throws ClienteInvalidoException {
         LOGGER.info("Tentando deletar cliente com ID: {}", clienteId);
-        Optional<Cliente> clienteExistente = clienteDAO.findById(clienteId);
+        Optional<Cliente> clienteExistente = clienteRepositoryPort.findById(clienteId);
 
         if (clienteExistente.isEmpty()) {
             LOGGER.warn("Cliente com ID {} não encontrado para deleção.", clienteId);
             throw new ClienteInvalidoException("Cliente com ID " + clienteId + " não encontrado.");
         }
 
-        clienteDAO.deleteById(clienteId);
+        clienteRepositoryPort.deleteById(clienteId);
         LOGGER.info("Cliente com ID {} deletado com sucesso", clienteId);
     }
 
 
-
     public Cliente atualizarCliente(Long id, Cliente cliente) throws Exception {
-        Cliente existente = clienteDAO.findById(id).orElseThrow(() ->
+        Cliente existente = clienteRepositoryPort.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("Cliente com ID " + id + " não encontrado."));
 
         cliente.setIdCliente(id);
 
-        clienteDAO.update(cliente);
+        clienteRepositoryPort.update(cliente);
         return existente;
     }
 
@@ -122,7 +116,7 @@ public class ClienteService implements ClienteUserCase {
         if (!ValidaCpfUtils.isCPF(cpf)) {
             return false;
         }
-        Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+        Cliente clienteExistente = clienteRepositoryPort.findByCpf(cpf);
         if (isAtualizar) {
 
             return clienteExistente == null || clienteExistente.getIdCliente().equals(clienteId);

@@ -2,7 +2,7 @@ package br.com.meubancodigitaljdbc.adapters.output.dao;
 
 
 import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaRepositoryPort;
-import br.com.meubancodigitaljdbc.adapters.output.mapper.ContaRowMapper;
+import br.com.meubancodigitaljdbc.adapters.output.dao.RowMapper.ContaRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
 import org.springframework.beans.factory.annotation.Autowired;

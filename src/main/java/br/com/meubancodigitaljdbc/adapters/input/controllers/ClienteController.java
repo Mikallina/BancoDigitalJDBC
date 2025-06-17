@@ -1,7 +1,11 @@
 package br.com.meubancodigitaljdbc.adapters.input.controllers;
 
+import br.com.meubancodigitaljdbc.adapters.input.controllers.mapper.ClienteMapper;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.ClienteRequest;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ClienteResponse;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.ClienteUseCase;
 import br.com.meubancodigitaljdbc.application.service.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,11 +29,14 @@ import java.util.Optional;
 @RequestMapping("/cliente")
 public class ClienteController {
 
-    private final ClienteService clienteService;
+    private final ClienteUseCase clienteUseCase;
+
+    private final ClienteMapper clienteMapper;
 
     @Autowired
-    public ClienteController(ClienteService clienteService) {
-        this.clienteService = clienteService;
+    public ClienteController(ClienteService clienteUserCase, ClienteMapper clienteMapper) {
+        this.clienteUseCase = clienteUserCase;
+        this.clienteMapper = clienteMapper;
     }
 
     private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
@@ -37,25 +44,25 @@ public class ClienteController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClienteController.class);
 
 
-    @PostMapping("/adicionar-cliente")
+    @PostMapping("/adicionar-clienteRequest")
     @Operation(
-            summary = "Adicionar novo cliente",
-            description = "Adiciona um novo cliente ao banco de dados. Retorna status 201 se criado com sucesso."
+            summary = "Adicionar novo clienteRequest",
+            description = "Adiciona um novo clienteRequest ao banco de dados. Retorna status 201 se criado com sucesso."
     )
     @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     public ResponseEntity<String> addCliente(
-            @RequestBody Cliente cliente,
+            @RequestBody ClienteRequest clienteRequest,
             HttpServletRequest request
     ) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
-        LOGGER.info("Cliente recebido no controller: cpf={}, nome={}", cliente.getCpf(), cliente.getNome());
+        LOGGER.info("Cliente recebido no controller: cpf={}, nome={}", clienteRequest.getCpf(), clienteRequest.getNome());
+        Cliente cliente = clienteMapper.toRequest(clienteRequest);
+        clienteUseCase.salvarCliente(cliente, false);
 
-        clienteService.salvarCliente(cliente, false);
 
-
-        LOGGER.info("Adicionar cliente: {} ", cliente);
+        LOGGER.info("Adicionar clienteRequest: {} ", clienteRequest);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
@@ -73,25 +80,27 @@ public class ClienteController {
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
     })
     @GetMapping("/buscarCpf/{cpf}")
-    public ResponseEntity<Cliente> buscarClientePorCpf(
+    public ResponseEntity<ClienteResponse> buscarClientePorCpf(
             @Parameter(description = "CPF do cliente a ser buscado", required = true, example = "12345678900")
             @PathVariable String cpf,
             HttpServletRequest request
     ) {
         long tempoInicio = System.currentTimeMillis();
 
-        Cliente cliente = clienteService.buscarClientePorCpf(cpf);
+        Cliente cliente = clienteUseCase.buscarClientePorCpf(cpf);
 
         if (cliente == null) {
             return ResponseEntity.notFound().build();
         }
+
+        ClienteResponse clienteResponse = clienteMapper.toResponse(cliente);
 
         LOGGER.info("Buscar cliente: {} ", cliente);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(cliente);
+        return ResponseEntity.ok(clienteResponse);
     }
 
 
@@ -103,18 +112,22 @@ public class ClienteController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @GetMapping("/clientes/listar-clientes")
-    public ResponseEntity<List<Cliente>> getAllClientes(HttpServletRequest request) {
+    public ResponseEntity<List<ClienteResponse>> getAllClientes(HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
 
-        List<Cliente> clientes = clienteService.listarClientes();
+        List<Cliente> clientes = clienteUseCase.listarClientes();
 
         LOGGER.info("Clientes encontrados: {}", clientes.size());
+
+        List<ClienteResponse> clientesResponse = clientes.stream()
+                .map(clienteMapper::toResponse)
+                .toList();
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(clientes);
+        return ResponseEntity.ok(clientesResponse);
     }
 
     @Operation(
@@ -127,10 +140,10 @@ public class ClienteController {
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
     })
     @GetMapping("/cadastro-cliente/{clienteId}")
-    public ResponseEntity<Cliente> buscarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) {
+    public ResponseEntity<ClienteResponse> buscarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) {
         long tempoInicio = System.currentTimeMillis();
 
-        Optional<Cliente> clienteOptional = clienteService.findById(clienteId);
+        Optional<Cliente> clienteOptional = clienteUseCase.findById(clienteId);
 
         LOGGER.info("Buscar cliente por ID: {} ", clienteOptional);
         long tempoFinal = System.currentTimeMillis();
@@ -138,9 +151,8 @@ public class ClienteController {
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         return clienteOptional
-                .map(ResponseEntity::ok)
+                .map(cliente -> ResponseEntity.ok(clienteMapper.toResponse(cliente)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
-
     }
 
     @Operation(
@@ -155,15 +167,20 @@ public class ClienteController {
     @PutMapping("/atualizar-cliente/{clienteId}")
     public ResponseEntity<?> atualizarClientePorID(
             @PathVariable Long clienteId,
-            @RequestBody Cliente cliente, // <- ESSENCIAL!
+            @RequestBody ClienteRequest clienteRequest,
             HttpServletRequest request
     ) throws Exception {
 
-            cliente.setIdCliente(clienteId);
-            clienteService.atualizarCliente(clienteId,cliente);
-            return ResponseEntity.ok("Cliente atualizado com sucesso");
+        Cliente cliente = clienteMapper.toRequest(clienteRequest);
+        cliente.setIdCliente(clienteId);
 
+        Cliente clienteAtualizado = clienteUseCase.atualizarCliente(clienteId, cliente);
+
+        ClienteResponse response = clienteMapper.toResponse(clienteAtualizado);
+
+        return ResponseEntity.ok(response);
     }
+
 
 
     @Operation(
@@ -179,7 +196,7 @@ public class ClienteController {
     public ResponseEntity<String> deletarClientePorID(@PathVariable Long clienteId, HttpServletRequest request) throws ClienteInvalidoException {
         long tempoInicio = System.currentTimeMillis();
 
-        clienteService.deletarCliente(clienteId);
+        clienteUseCase.deletarCliente(clienteId);
 
         LOGGER.info("Deletar Cliente {}", clienteId);
         long tempoFinal = System.currentTimeMillis();

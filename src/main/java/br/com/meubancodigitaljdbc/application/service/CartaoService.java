@@ -1,14 +1,15 @@
 package br.com.meubancodigitaljdbc.application.service;
 
-import br.com.meubancodigitaljdbc.adapters.output.dao.CartaoDAO;
-import br.com.meubancodigitaljdbc.application.domain.dto.CompraCartaoDTO;
+
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.CompraCartaoRequest;
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoCartao;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.*;
 import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoDebito;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.CartaoUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CartaoUseCase;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.CartaoRepositoryPort;
 import br.com.meubancodigitaljdbc.utils.CartaoUtils;
 import br.com.meubancodigitaljdbc.utils.CategoriaLimiteUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,18 +24,18 @@ import org.slf4j.LoggerFactory;
 
 
 @Service
-public class CartaoService implements CartaoUserCase {
+public class CartaoService implements CartaoUseCase {
 
-    private final CartaoDAO cartaoDAO;
+    private final CartaoRepositoryPort cartaoRepositoryPort;
 
     private final ContaService contaService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CartaoService.class);
 
     @Autowired
-    public CartaoService(CartaoDAO cartaoDAO, ContaService contaService) {
+    public CartaoService(CartaoRepositoryPort cartaoRepositoryPort, ContaService contaService) {
         this.contaService = contaService;
-        this.cartaoDAO = cartaoDAO;
+        this.cartaoRepositoryPort = cartaoRepositoryPort;
 
 
     }
@@ -44,7 +45,7 @@ public class CartaoService implements CartaoUserCase {
         if (cartao == null || cartao.getNumCartao() == null) {
             throw new CartaoNuloException("Erro: Tentativa de Salvar o Cartão nulo");
         }
-            cartaoDAO.save(cartao);
+            cartaoRepositoryPort.save(cartao);
     }
 
     public Cartao criarCartao(String contaC, TipoCartao tipoCartao, int senha, String diaVencimento)
@@ -70,7 +71,7 @@ public class CartaoService implements CartaoUserCase {
         }
 
         LOGGER.info("Cartão criado com sucesso. Número: {}", cartao.getNumCartao());
-        return cartaoDAO.save(cartao);
+        return cartaoRepositoryPort.save(cartao);
     }
 
 
@@ -124,7 +125,7 @@ public class CartaoService implements CartaoUserCase {
 
 
     public boolean alterarLimiteCartao(String numCartao, double novoLimite)
-            throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException {
+            throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException, CartaoFaturaException {
 
         Cartao cartao = validarCartao(numCartao, true);
 
@@ -136,7 +137,7 @@ public class CartaoService implements CartaoUserCase {
             throw new RegraNegocioException("Tipo de cartão não suportado para alteração de limite");
         }
 
-        boolean sucesso = cartaoDAO.alterarLimiteCartao(numCartao, novoLimite);
+        boolean sucesso = cartaoRepositoryPort.alterarLimiteCartao(numCartao, novoLimite);
 
         if (sucesso) {
             LOGGER.info("Limite alterado com sucesso para cartão {}: {}", numCartao, novoLimite);
@@ -150,11 +151,11 @@ public class CartaoService implements CartaoUserCase {
 
 
     public boolean alterarStatus(String numCartao, boolean novoStatus)
-            throws SQLException, CartaoStatusException, CartaoNuloException {
+            throws SQLException, CartaoStatusException, CartaoNuloException, CartaoFaturaException {
 
         validarCartao(numCartao, false);
 
-        boolean sucesso = cartaoDAO.alterarStatusCartao(numCartao, novoStatus);
+        boolean sucesso = cartaoRepositoryPort.alterarStatusCartao(numCartao, novoStatus);
 
         if (sucesso) {
             LOGGER.info("Status alterado com sucesso para cartão {}: {}", numCartao, novoStatus);
@@ -168,11 +169,11 @@ public class CartaoService implements CartaoUserCase {
 
 
     public boolean alterarSenhaCartao(String numCartao, int senhaAntiga, int novaSenha)
-            throws SQLException, CartaoStatusException, CartaoNuloException {
+            throws SQLException, CartaoStatusException, CartaoNuloException, CartaoFaturaException {
 
         validarCartao(numCartao, true);
 
-        boolean sucesso = cartaoDAO.alterarSenhaCartao(numCartao, senhaAntiga, novaSenha);
+        boolean sucesso = cartaoRepositoryPort.alterarSenhaCartao(numCartao, senhaAntiga, novaSenha);
 
         if (!sucesso) {
             throw new SQLException("Senha antiga incorreta");
@@ -183,9 +184,9 @@ public class CartaoService implements CartaoUserCase {
 
 
     public Cartao validarCartao(String numCartao, boolean checarStatusAtivo)
-            throws CartaoNuloException, CartaoStatusException, SQLException {
+            throws CartaoNuloException, CartaoStatusException, SQLException, CartaoFaturaException {
 
-        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumeroCartao(numCartao));
+        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoRepositoryPort.buscarPorNumeroCartao(numCartao));
         if (cartaoOptional.isEmpty()) {
             throw new CartaoNuloException("Cartão não encontrado");
         }
@@ -210,8 +211,8 @@ public class CartaoService implements CartaoUserCase {
     }
 
 
-    public boolean realizarCompra(CompraCartaoDTO dto)
-            throws CartaoStatusException, SQLException, CartaoNuloException {
+    public boolean realizarCompra(CompraCartaoRequest dto)
+            throws CartaoStatusException, SQLException, CartaoNuloException, CartaoFaturaException {
 
         LOGGER.info("Processando compra de {} no cartão {}", dto.getValor(), dto.getNumCartao());
 
@@ -242,7 +243,7 @@ public class CartaoService implements CartaoUserCase {
 
 
     public void realizarPagamentoFatura(String numCartao, double valorPagamento) throws CartaoFaturaException, SQLException, CartaoStatusException, CartaoNuloException {
-        Cartao cartao = cartaoDAO.buscarPorNumeroCartao(numCartao);
+        Cartao cartao = cartaoRepositoryPort.buscarPorNumeroCartao(numCartao);
         LOGGER.info("Iniciando pagamento de fatura. Cartão: {}, Valor: {}", numCartao, valorPagamento);
 
         validarCartao(numCartao, true);
@@ -275,8 +276,8 @@ public class CartaoService implements CartaoUserCase {
 
     }
 
-    public Cartao buscarCartaoPorCliente(String numCartao) throws SQLException {
-        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoDAO.buscarPorNumeroCartao(numCartao));
+    public Cartao buscarCartaoPorCliente(String numCartao) throws CartaoFaturaException, CartaoStatusException, SQLException, CartaoNuloException {
+        Optional<Cartao> cartaoOptional = Optional.ofNullable(cartaoRepositoryPort.buscarPorNumeroCartao(numCartao));
         return cartaoOptional.orElse(null);
     }
 
@@ -287,7 +288,7 @@ public class CartaoService implements CartaoUserCase {
             throw new ContaNaoEncontradaException("Conta não encontrada para o número: " + numeroConta);
         }
 
-        List<Cartao> cartoes = cartaoDAO.buscarPorConta(conta);
+        List<Cartao> cartoes = cartaoRepositoryPort.buscarPorConta(conta);
 
         if (cartoes == null || cartoes.isEmpty()) {
             throw new CartaoNaoEncontradoException("Nenhum cartão encontrado para a conta: " + numeroConta);
@@ -297,8 +298,8 @@ public class CartaoService implements CartaoUserCase {
     }
 
 
-    public void consultarFatura(String numCartao) throws SQLException {
-        Cartao cartao = cartaoDAO.buscarPorNumeroCartao(numCartao);
+    public void consultarFatura(String numCartao) throws SQLException, CartaoFaturaException, CartaoStatusException, CartaoNuloException {
+        Cartao cartao = cartaoRepositoryPort.buscarPorNumeroCartao(numCartao);
 
         if (!(cartao instanceof CartaoCredito cartaoCredito)) {
             throw new IllegalArgumentException("Cartão não é de crédito ou não encontrado");
@@ -309,14 +310,14 @@ public class CartaoService implements CartaoUserCase {
 
     public void deletarCartao(Long cartaoId) throws ClienteInvalidoException, SQLException {
         LOGGER.info("Tentando deletar cartao com ID: {}", cartaoId);
-        Optional<Cartao> contaExistente = cartaoDAO.findById(cartaoId);
+        Optional<Cartao> contaExistente = cartaoRepositoryPort.findById(cartaoId);
 
         if (contaExistente.isEmpty()) {
             LOGGER.warn("Cartao com ID {} não encontrado para deleção.", cartaoId);
             throw new ClienteInvalidoException("Cartao com ID " + cartaoId + " não encontrado.");
         }
 
-        cartaoDAO.deleteById(cartaoId);
+        cartaoRepositoryPort.deleteById(cartaoId);
         LOGGER.info("Cartao com ID {} deletado com sucesso", cartaoId);
     }
 }

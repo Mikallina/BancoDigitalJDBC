@@ -1,6 +1,6 @@
 package br.com.meubancodigitaljdbc.infrastructure.configs;
 
-import br.com.meubancodigitaljdbc.adapters.output.mapper.ContaRowMapper;
+import br.com.meubancodigitaljdbc.adapters.output.dao.RowMapper.ContaRowMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

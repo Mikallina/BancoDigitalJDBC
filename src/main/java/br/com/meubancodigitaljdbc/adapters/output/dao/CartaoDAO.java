@@ -1,7 +1,8 @@
 package br.com.meubancodigitaljdbc.adapters.output.dao;
 
+import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.ports.output.repository.CartaoRepositoryPort;
-import br.com.meubancodigitaljdbc.adapters.output.mapper.CartaoRowMapper;
+import br.com.meubancodigitaljdbc.adapters.output.dao.RowMapper.CartaoRowMapper;
 import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoCredito;
 import br.com.meubancodigitaljdbc.application.domain.model.CartaoDebito;
@@ -186,7 +187,7 @@ public class CartaoDAO implements CartaoRepositoryPort {
     }
 
 
-    public void deleteById(Long idCartao) throws SQLException {
+    public void deleteById(Long idCartao) throws ClienteInvalidoException, SQLException {
         try (Connection conn = dataSource.getConnection();
              CallableStatement stmt = conn.prepareCall("{CALL deletar_cartao(?)}")) {
             stmt.setLong(1, idCartao);

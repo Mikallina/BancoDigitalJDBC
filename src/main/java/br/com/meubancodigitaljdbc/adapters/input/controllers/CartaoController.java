@@ -1,9 +1,12 @@
 package br.com.meubancodigitaljdbc.adapters.input.controllers;
 
-import br.com.meubancodigitaljdbc.application.domain.dto.*;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.mapper.CartaoMapper;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.*;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.CartaoResponse;
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoCartao;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.*;
 import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CartaoUseCase;
 import br.com.meubancodigitaljdbc.application.service.CartaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -29,17 +32,20 @@ import java.util.Optional;
 public class CartaoController {
 
 
-    private final CartaoService cartaoService;
+    private final CartaoUseCase cartaoUseCase;
+
+    private final CartaoMapper cartaoMapper;
 
     private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CartaoController.class);
 
     @Autowired
-    public CartaoController(CartaoService cartaoService) {
+    public CartaoController(CartaoService cartaoUserCase, CartaoMapper cartaoMapper) {
 
-        this.cartaoService = cartaoService;
+        this.cartaoUseCase = cartaoUserCase;
 
+        this.cartaoMapper = cartaoMapper;
     }
 
     @Operation(
@@ -53,11 +59,12 @@ public class CartaoController {
             @ApiResponse(responseCode = "404", description = "Conta não encontrada")
     })
     @PostMapping("/emitir-cartao")
-    public ResponseEntity<Cartao> emitirCartao(@RequestParam String contaC, @RequestParam TipoCartao tipoCartao,
-                                               @RequestParam(required = false) String diaVencimento, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<CartaoResponse> emitirCartao(@RequestParam String contaC, @RequestParam TipoCartao tipoCartao,
+                                                       @RequestParam(required = false) String diaVencimento, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        Cartao cartao = cartaoService.criarCartao(contaC, tipoCartao, 1234, diaVencimento);
+        Cartao cartao = cartaoUseCase.criarCartao(contaC, tipoCartao, 1234, diaVencimento);
+        CartaoResponse response = cartaoMapper.cartaToResponse(cartao);
 
         LOGGER.info("Emitir cartão: {} ", tipoCartao);
 
@@ -66,7 +73,7 @@ public class CartaoController {
 
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(cartao);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -81,11 +88,11 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno ao processar a solicitação")
     })
     @PutMapping("/alterar-senha/{numCartao}")
-    public Boolean alterarSenha(@PathVariable String numCartao, @RequestBody AlterarSenhaDTO dto, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException {
+    public ResponseEntity<Boolean> alterarSenha(@PathVariable String numCartao, @RequestBody AlterarSenhaRequest alterarSenhaRequest, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, CartaoFaturaException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar a senha do cartão
-        boolean sucesso = cartaoService.alterarSenhaCartao(numCartao, dto.getSenhaAntiga(), dto.getSenhaNova());
+        boolean sucesso = cartaoUseCase.alterarSenhaCartao(numCartao, alterarSenhaRequest.getSenhaAntiga(), alterarSenhaRequest.getSenhaNova());
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
@@ -93,7 +100,7 @@ public class CartaoController {
         LOGGER.info("Alterando senha para o cartão: {} ", numCartao);
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return sucesso;
+        return ResponseEntity.ok(sucesso);
     }
 
 
@@ -108,11 +115,11 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno ao buscar o cartão")
     })
     @GetMapping("/dados/{numCartao}")
-    public ResponseEntity<Cartao> buscarCartao(@PathVariable String numCartao, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<CartaoResponse> buscarCartao(@PathVariable String numCartao, HttpServletRequest request) throws SQLException, CartaoFaturaException, CartaoStatusException, CartaoNuloException {
         long tempoInicio = System.currentTimeMillis();
 
-        // Chama o serviço para buscar o cartão pelo número
-        Cartao cartao = cartaoService.buscarCartaoPorCliente(numCartao);
+        Cartao cartao = cartaoUseCase.buscarCartaoPorCliente(numCartao);
+        CartaoResponse cartaoResponse = cartaoMapper.cartaToResponse(cartao);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
@@ -120,7 +127,7 @@ public class CartaoController {
         LOGGER.info("Buscando cartão: {} ", numCartao);
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(cartao);
+        return ResponseEntity.ok(cartaoResponse);
     }
 
 
@@ -137,11 +144,11 @@ public class CartaoController {
     })
     @PutMapping("/alterar-status/{numCartao}")
     public ResponseEntity<Boolean> alterarStatusCartao(@PathVariable String numCartao,
-                                                       @RequestBody AlterarStatusDTO dto, HttpServletRequest request) throws CartaoNaoEncontradoException, SQLException, CartaoNuloException, CartaoStatusException {
+                                                       @RequestBody AlterarStatusResquest alterarStatusResquest, HttpServletRequest request) throws SQLException, CartaoNuloException, CartaoStatusException, CartaoFaturaException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar o status do cartão
-        boolean sucesso = cartaoService.alterarStatus(numCartao, dto.isStatus());
+        boolean sucesso = cartaoUseCase.alterarStatus(numCartao, alterarStatusResquest.isStatus());
 
         LOGGER.info("Alterar status do cartão {}", numCartao);
         long tempoFinal = System.currentTimeMillis();
@@ -166,11 +173,11 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno ao alterar limite")
     })
     @PutMapping("/alterar-limite/{numCartao}")
-    public ResponseEntity<Boolean> alterarLimite(@PathVariable String numCartao, @RequestBody LimiteDTO limiteDTO, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException {
+    public ResponseEntity<Boolean> alterarLimite(@PathVariable String numCartao, @RequestBody LimiteRequest limiteRequest, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, RegraNegocioException, CartaoFaturaException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para alterar o limite do cartão
-        boolean sucesso = cartaoService.alterarLimiteCartao(numCartao, limiteDTO.getNovoLimite());
+        boolean sucesso = cartaoUseCase.alterarLimiteCartao(numCartao, limiteRequest.getNovoLimite());
 
         LOGGER.info("Alterar limite do cartão: {} ", numCartao);
         long tempoFinal = System.currentTimeMillis();
@@ -195,11 +202,14 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @GetMapping("/{numeroConta}")
-    public ResponseEntity<List<Cartao>> verificarCartao(@PathVariable String numeroConta, HttpServletRequest request) throws SQLException, ContaNaoEncontradaException, CartaoNaoEncontradoException {
+    public ResponseEntity<List<CartaoResponse>> verificarCartao(@PathVariable String numeroConta, HttpServletRequest request) throws SQLException, ContaNaoEncontradaException, CartaoNaoEncontradoException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para buscar cartões vinculados à conta
-        List<Cartao> cartoes = cartaoService.buscarCartaoPorConta(numeroConta);
+        List<Cartao> cartoes = cartaoUseCase.buscarCartaoPorConta(numeroConta);
+        List<CartaoResponse> response = cartoes.stream()
+                                               .map(cartaoMapper::cartaToResponse)
+                                               .toList();
 
         LOGGER.info("Verificar cartão {}", numeroConta);
         long tempoFinal = System.currentTimeMillis();
@@ -207,7 +217,7 @@ public class CartaoController {
 
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(cartoes);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -223,13 +233,13 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @PostMapping("/compra-cartao")
-    public Optional<Boolean> realizarPagamento(@RequestBody CompraCartaoDTO compraCartaoDTO, HttpServletRequest request) throws CartaoStatusException, CartaoNaoEncontradoException, SQLException, CartaoNuloException {
+    public Optional<Boolean> realizarPagamento(@RequestBody CompraCartaoRequest compraCartaoRequest, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, CartaoFaturaException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para realizar a compra
-        boolean sucesso = cartaoService.realizarCompra(compraCartaoDTO);
+        boolean sucesso = cartaoUseCase.realizarCompra(compraCartaoRequest);
 
-        LOGGER.info("Realizar compra com cartão: {}", compraCartaoDTO);
+        LOGGER.info("Realizar compra com cartão: {}", compraCartaoRequest);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
 
@@ -251,11 +261,11 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @GetMapping("/fatura/{numCartao}")
-    public ResponseEntity<Map<String, Object>> consultarFatura(@PathVariable String numCartao, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<Map<String, Object>> consultarFatura(@PathVariable String numCartao, HttpServletRequest request) throws SQLException, CartaoFaturaException, CartaoStatusException, CartaoNuloException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para consultar a fatura do cartão
-        cartaoService.consultarFatura(numCartao);
+        cartaoUseCase.consultarFatura(numCartao);
 
         LOGGER.info("Consultar fatura do cartão {}", numCartao);
 
@@ -280,11 +290,11 @@ public class CartaoController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @PutMapping("/pagar-fatura")
-    public ResponseEntity<String> pagarFatura(@RequestBody PagamentoFaturaDTO dto, HttpServletRequest request) throws CartaoFaturaException, CartaoStatusException, SQLException, CartaoNuloException {
+    public ResponseEntity<String> pagarFatura(@RequestBody PagamentoFaturaRequest dto, HttpServletRequest request) throws CartaoFaturaException, CartaoStatusException, SQLException, CartaoNuloException {
         long tempoInicio = System.currentTimeMillis();
 
         // Chama o serviço para realizar o pagamento da fatura
-        cartaoService.realizarPagamentoFatura(dto.getNumCartao(), dto.getValor());
+        cartaoUseCase.realizarPagamentoFatura(dto.getNumCartao(), dto.getValor());
 
         LOGGER.info("Pagar fatura... ");
 
@@ -310,7 +320,7 @@ public class CartaoController {
     public ResponseEntity<String> deletarCartaoId(@PathVariable Long cartaoId, HttpServletRequest request) throws ClienteInvalidoException, SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        cartaoService.deletarCartao(cartaoId);
+        cartaoUseCase.deletarCartao(cartaoId);
 
         LOGGER.info("Deletar Cartao {}", cartaoId);
         long tempoFinal = System.currentTimeMillis();

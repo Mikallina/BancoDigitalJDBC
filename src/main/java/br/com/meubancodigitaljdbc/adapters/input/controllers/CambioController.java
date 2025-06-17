@@ -1,5 +1,6 @@
 package br.com.meubancodigitaljdbc.adapters.input.controllers;
 
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CambioUseCase;
 import br.com.meubancodigitaljdbc.application.service.CambioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,10 +24,11 @@ import java.util.Map;
 @RequestMapping("/cambio")
 public class CambioController {
 
-    private final CambioService cambioService;
+    private final CambioUseCase cambioUseCase;
     @Autowired
-    public CambioController(CambioService cambioService) {
-        this.cambioService = cambioService;
+    public CambioController(CambioService cambioService, CambioUseCase cambioUseCase) {
+        this.cambioUseCase = cambioUseCase;
+
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(CambioController.class);
 
@@ -49,7 +51,7 @@ public class CambioController {
 
         long tempoInicio = System.currentTimeMillis();
 
-        double valorConvertido = cambioService.converterMoeda(valor, moedaBase, moedaDestino);
+        double valorConvertido = cambioUseCase.converterMoeda(valor, moedaBase, moedaDestino);
 
         LOGGER.info("Conversão de moedas: Moeda Base: {} Moeda Destino: {} ", moedaBase, moedaDestino);
 
@@ -72,7 +74,7 @@ public class CambioController {
     })
     @GetMapping("/moedas")
     public ResponseEntity<Map<String, String>> listarMoedas() throws Exception {
-        Map<String, String> moedas = cambioService.obterMoedasDisponiveis();
+        Map<String, String> moedas = cambioUseCase.obterMoedasDisponiveis();
 
         LOGGER.info("Moedas: {}", moedas);
 

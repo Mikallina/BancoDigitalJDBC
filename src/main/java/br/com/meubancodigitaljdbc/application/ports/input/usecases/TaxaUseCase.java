@@ -4,7 +4,7 @@ import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
 
-public interface TaxaUserCase {
+public interface TaxaUseCase {
 
     double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC);
 

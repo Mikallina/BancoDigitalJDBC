@@ -1,8 +1,6 @@
 package br.com.meubancodigitaljdbc.application.service;
 
-import br.com.meubancodigitaljdbc.adapters.output.dao.ContaCorrenteDAO;
-import br.com.meubancodigitaljdbc.adapters.output.dao.ContaDAO;
-import br.com.meubancodigitaljdbc.adapters.output.dao.ContaPoupancaDAO;
+
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ContaNaoValidaException;
@@ -11,11 +9,13 @@ import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Conta;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.ContaUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.ContaUseCase;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaCorrenteRepositoryPort;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaPoupancaRepository;
+import br.com.meubancodigitaljdbc.application.ports.output.repository.ContaRepositoryPort;
 import br.com.meubancodigitaljdbc.utils.ContaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.util.List;
@@ -23,24 +23,24 @@ import java.util.Optional;
 
 
 @Service
-public class ContaService implements ContaUserCase {
+public class ContaService implements ContaUseCase {
 
-    private final ContaDAO contaDAO;
+    private final ContaRepositoryPort contaRepositoryPort;
 
     private final TaxaService taxaService;
 
-    private final ContaCorrenteDAO contaCorrenteDAO;
+    private final ContaCorrenteRepositoryPort contaCorrenteRepository;
 
-    private final ContaPoupancaDAO contaPoupancaDAO;
+    private final ContaPoupancaRepository contaPoupancaRepository;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContaService.class);
 
 
-    public ContaService(ContaDAO contaDAO, TaxaService taxaService, ContaCorrenteDAO contaCorrenteDAO, ContaPoupancaDAO contaPoupancaDAO) {
-        this.contaDAO = contaDAO;
+    public ContaService(ContaRepositoryPort contaRepositoryPort, TaxaService taxaService, ContaCorrenteRepositoryPort contaCorrenteRepository, ContaPoupancaRepository contaPoupancaRepository) {
+        this.contaRepositoryPort = contaRepositoryPort;
         this.taxaService = taxaService;
-        this.contaCorrenteDAO = contaCorrenteDAO;
-        this.contaPoupancaDAO = contaPoupancaDAO;
+        this.contaCorrenteRepository = contaCorrenteRepository;
+        this.contaPoupancaRepository = contaPoupancaRepository;
     }
 
 
@@ -53,10 +53,10 @@ public class ContaService implements ContaUserCase {
 
         try {
             if (isAtualizar) {
-                contaDAO.atualizarConta(conta);
+                contaRepositoryPort.atualizarConta(conta);
                 LOGGER.info("Conta atualizada com sucesso: {}", conta.getNumConta());
             } else {
-                contaDAO.salvarConta(conta);
+                contaRepositoryPort.salvarConta(conta);
                 LOGGER.info("Conta atualizada com sucesso: {}", conta.getNumConta());
             }
         } catch (SQLException e) {
@@ -66,7 +66,7 @@ public class ContaService implements ContaUserCase {
 
     public List<Conta> buscarContasPorCliente(Cliente cliente) throws SQLException {
         LOGGER.info("Buscando contas para o cliente com ID: {}", cliente.getIdCliente());
-        return contaDAO.buscarPorClienteId(cliente.getIdCliente());
+        return contaRepositoryPort.buscarPorClienteId(cliente.getIdCliente());
     }
 
 
@@ -88,14 +88,14 @@ public class ContaService implements ContaUserCase {
             throw new IllegalArgumentException("Tipo de conta inválido.");
         }
 
-        return contaDAO.salvarConta(conta);
+        return contaRepositoryPort.salvarConta(conta);
     }
 
-    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException {
+    public boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws Exception {
         LOGGER.info("Iniciando a aplicação de taxa na conta com ID: {}", idConta);
         Conta conta;
         try {
-            conta = contaDAO.buscarContaPorId(idConta);
+            conta = contaRepositoryPort.buscarContaPorId(idConta);
             LOGGER.info("Conta encontrada: {}", conta.getNumConta());
         } catch (SQLException e) {
             LOGGER.error("Erro ao buscar conta com ID: {}", idConta, e);
@@ -112,7 +112,7 @@ public class ContaService implements ContaUserCase {
                 Cliente cliente = contaCorrente.getCliente();
                 valorAplicado = taxaService.taxaManutencaoCC(cliente, contaCorrente);
                 contaCorrente.setSaldo(contaCorrente.getSaldo() - valorAplicado);
-                contaCorrenteDAO.atualizarConta(contaCorrente);
+                contaCorrenteRepository.atualizarConta(contaCorrente);
                 LOGGER.info("Taxa de manutenção aplicada na conta corrente. Valor aplicado: {}", valorAplicado);
             }
         } else {
@@ -120,7 +120,7 @@ public class ContaService implements ContaUserCase {
                 Cliente cliente = contaPoupanca.getCliente();
                 valorAplicado = taxaService.taxaManutencaoCP(cliente, contaPoupanca);
                 contaPoupanca.setSaldo(contaPoupanca.getSaldo() + valorAplicado);
-                contaPoupancaDAO.atualizarConta(contaPoupanca);
+                contaPoupancaRepository.atualizarConta(contaPoupanca);
                 LOGGER.info("Rendimento aplicado na conta poupança. Valor aplicado: {}", valorAplicado);
 
             } else {
@@ -151,7 +151,7 @@ public class ContaService implements ContaUserCase {
             LOGGER.error("Valor do depósito não pode ser zero ou negativo. Valor informado: {}", valor);
             throw new OperacoesException("Valor do depósito não pode ser zero");
         }
-        Conta conta = contaDAO.buscarPorNumero(numContaDestino);
+        Conta conta = contaRepositoryPort.buscarPorNumero(numContaDestino);
 
         if (conta == null) {
             LOGGER.error("Conta não encontrada para o número: {}", numContaDestino);
@@ -169,8 +169,8 @@ public class ContaService implements ContaUserCase {
                                          boolean transferenciaPoupanca, boolean transferenciaPix, boolean transferenciaOutrasContas) throws SQLException {
         LOGGER.info("Iniciando a operação de transferência de {} para a conta de destino: {}", valor, numContaDestino);
 
-        Conta contaOrigem = contaDAO.buscarPorNumero(numContaOrigem);
-        Conta contaDestino = contaDAO.buscarPorNumero(numContaDestino);
+        Conta contaOrigem = contaRepositoryPort.buscarPorNumero(numContaOrigem);
+        Conta contaDestino = contaRepositoryPort.buscarPorNumero(numContaDestino);
 
         if (contaOrigem == null) {
             LOGGER.error("Conta de origem não encontrada: {}", numContaOrigem);
@@ -207,28 +207,28 @@ public class ContaService implements ContaUserCase {
         LOGGER.info("Saldo atualizado para a conta origem (ID: {}): {}", contaOrigem.getIdConta(), contaOrigem.getSaldo());
 
         if (contaDestino != null && (transferenciaPoupanca || transferenciaOutrasContas)) {
-            contaDAO.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
+            contaRepositoryPort.atualizarSaldo(contaDestino.getIdConta(), contaDestino.getSaldo());
             LOGGER.info("Saldo atualizado para a conta destino ID: {}): {}", contaDestino.getIdConta(), contaDestino.getSaldo());
         }
-        contaDAO.atualizarSaldo(contaOrigem.getIdConta(),contaOrigem.getSaldo());
+        contaRepositoryPort.atualizarSaldo(contaOrigem.getIdConta(),contaOrigem.getSaldo());
         return true;
     }
 
     public Conta buscarContas(String conta) throws SQLException {
         LOGGER.info("Buscando conta pelo número: {}", conta);
-        return contaDAO.buscarPorNumero(conta);
+        return contaRepositoryPort.buscarPorNumero(conta);
     }
 
     public Conta buscarContaPorClienteEConta(String cpf, String numConta) throws SQLException {
         LOGGER.info("Buscando conta para o cliente com CPF: {} e número da conta: {}", cpf, numConta);
 
-        Cliente cliente = contaDAO.buscarClientePorCpf(cpf);
+        Cliente cliente = contaRepositoryPort.buscarClientePorCpf(cpf);
         if (cliente == null) {
             LOGGER.error("Cliente não encontrado com CPF: {}", cpf);
             throw new IllegalArgumentException("Cliente não encontrado.");
         }
 
-        List<Conta> contas = contaDAO.buscarPorClienteId(cliente.getIdCliente());
+        List<Conta> contas = contaRepositoryPort.buscarPorClienteId(cliente.getIdCliente());
 
 
         Conta conta = contas.stream()
@@ -245,14 +245,14 @@ public class ContaService implements ContaUserCase {
 
     public void deletarConta(Long contaId) throws ClienteInvalidoException {
         LOGGER.info("Tentando deletar conta com ID: {}", contaId);
-        Optional<Conta> contaExistente = contaDAO.findById(contaId);
+        Optional<Conta> contaExistente = contaRepositoryPort.findById(contaId);
 
         if (contaExistente.isEmpty()) {
             LOGGER.warn("Conta com ID {} não encontrado para deleção.", contaId);
             throw new ClienteInvalidoException("Conta com ID " + contaId + " não encontrado.");
         }
 
-        contaDAO.deleteById(contaId);
+        contaRepositoryPort.deleteById(contaId);
         LOGGER.info("Conta com ID {} deletado com sucesso", contaId);
     }
 

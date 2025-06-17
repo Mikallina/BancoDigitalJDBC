@@ -1,7 +1,7 @@
 package br.com.meubancodigitaljdbc.adapters.output.producers;
 
 
-import br.com.meubancodigitaljdbc.application.domain.dto.EmailDTO;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.EmailRequest;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.infrastructure.configs.RabbitMQConfig;
 
@@ -29,14 +29,14 @@ public class ClienteProducer {
 
     public void publicarMensagemEmail(Cliente cliente){
         Long idCliente = cliente.getIdCliente();
-        EmailDTO emailDto = new EmailDTO();
-        emailDto.setIdCliente(idCliente);
-        emailDto.setNome(cliente.getNome());
-        emailDto.setEmailTo(cliente.getEmail());
-        emailDto.setTitulo("Cadastro de email realizado com sucesso");
-        emailDto.setTexto(cliente.getNome() + ", Seu cadastro de email foi efetuado com sucesso");
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setIdCliente(idCliente);
+        emailRequest.setNome(cliente.getNome());
+        emailRequest.setEmailTo(cliente.getEmail());
+        emailRequest.setTitulo("Cadastro de email realizado com sucesso");
+        emailRequest.setTexto(cliente.getNome() + ", Seu cadastro de email foi efetuado com sucesso");
 
-        rabbitTemplate.convertAndSend("", routingKey, emailDto);
+        rabbitTemplate.convertAndSend("", routingKey, emailRequest);
 
     }
 }

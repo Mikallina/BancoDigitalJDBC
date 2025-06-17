@@ -10,7 +10,7 @@ import br.com.meubancodigitaljdbc.application.domain.model.Conta;
 import java.sql.SQLException;
 import java.util.List;
 
-public interface ContaUserCase {
+public interface ContaUseCase {
 
     void salvarConta(Conta conta, boolean isAtualizar) throws ContaNaoValidaException;
 
@@ -18,7 +18,7 @@ public interface ContaUserCase {
 
     Conta criarConta(Cliente cliente, int agencia, TipoConta tipoConta) throws SQLException;
 
-    boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws SQLException;
+    boolean aplicarTaxaOuRendimento(Long idConta, TipoConta tipoConta, boolean aplicarTaxa) throws Exception;
 
     boolean realizarDeposito(String numContaDestino, double valor) throws OperacoesException, SQLException, ContaNaoValidaException;
 

@@ -1,8 +1,9 @@
 package br.com.meubancodigitaljdbc.application.service;
 
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.CambioUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.CambioUseCase;
 import br.com.meubancodigitaljdbc.adapters.output.resttemplate.CambioClient;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.CambioException;
+import br.com.meubancodigitaljdbc.application.ports.output.api.CambioClientPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
-public class CambioService implements CambioUserCase {
+public class CambioService implements CambioUseCase {
 
 
     @Value("${api.cambio.url}")
@@ -20,12 +21,12 @@ public class CambioService implements CambioUserCase {
     private String apiKey;
 
 
-    private final CambioClient cambioClient;
+    private final CambioClientPort cambioClientPort;
 
     private static final String CONVERSION_RATES_KEY = "conversion_rates";
     @Autowired
-    public CambioService(CambioClient cambioClient) {
-        this.cambioClient = cambioClient;
+    public CambioService(CambioClient cambioClientPort) {
+        this.cambioClientPort = cambioClientPort;
     }
 
 
@@ -35,7 +36,7 @@ public class CambioService implements CambioUserCase {
             String url = String.format("%s/%s/latest/%s", apiUrl, apiKey, moedaBase);
 
             // Requisição para obter a resposta da API
-            Map<String, Object> body = cambioClient.buscarDadosDeCambio(url);
+            Map<String, Object> body = cambioClientPort.buscarDadosDeCambio(url);
 
             // Verifique se a resposta contém a chave "conversion_rates"
             if (body == null || !body.containsKey(CONVERSION_RATES_KEY)) {
@@ -69,7 +70,7 @@ public class CambioService implements CambioUserCase {
     public Map<String, String> obterMoedasDisponiveis() throws Exception {
         String url = String.format("%s/%s/latest/USD", apiUrl, apiKey);
 
-        Map<String, Object> body = cambioClient.buscarDadosDeCambio(url);
+        Map<String, Object> body = cambioClientPort.buscarDadosDeCambio(url);
 
         if (body == null || !body.containsKey(CONVERSION_RATES_KEY)) {
             throw new CambioException("A resposta da API não contém a chave '" + CONVERSION_RATES_KEY + "'.");

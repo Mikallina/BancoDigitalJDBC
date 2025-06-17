@@ -4,11 +4,11 @@ import br.com.meubancodigitaljdbc.application.domain.enuns.Categoria;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaCorrente;
 import br.com.meubancodigitaljdbc.application.domain.model.ContaPoupanca;
-import br.com.meubancodigitaljdbc.application.ports.input.usecases.TaxaUserCase;
+import br.com.meubancodigitaljdbc.application.ports.input.usecases.TaxaUseCase;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TaxaService implements TaxaUserCase {
+public class TaxaService implements TaxaUseCase {
 
     public double taxaManutencaoCC(Cliente cliente, ContaCorrente contaC) {
         double taxaManutencao = 0;

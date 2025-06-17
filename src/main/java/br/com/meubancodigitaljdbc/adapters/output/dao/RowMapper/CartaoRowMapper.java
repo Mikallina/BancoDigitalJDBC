@@ -1,4 +1,4 @@
-package br.com.meubancodigitaljdbc.adapters.output.mapper;
+package br.com.meubancodigitaljdbc.adapters.output.dao.RowMapper;
 
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoCartao;
 import br.com.meubancodigitaljdbc.application.domain.model.Cartao;
