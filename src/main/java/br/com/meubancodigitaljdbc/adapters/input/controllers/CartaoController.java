@@ -91,7 +91,6 @@ public class CartaoController {
     public ResponseEntity<Boolean> alterarSenha(@PathVariable String numCartao, @RequestBody AlterarSenhaRequest alterarSenhaRequest, HttpServletRequest request) throws CartaoStatusException, SQLException, CartaoNuloException, CartaoFaturaException {
         long tempoInicio = System.currentTimeMillis();
 
-        // Chama o serviço para alterar a senha do cartão
         boolean sucesso = cartaoUseCase.alterarSenhaCartao(numCartao, alterarSenhaRequest.getSenhaAntiga(), alterarSenhaRequest.getSenhaNova());
 
         long tempoFinal = System.currentTimeMillis();

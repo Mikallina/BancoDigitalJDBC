@@ -1,8 +1,13 @@
 package br.com.meubancodigitaljdbc.adapters.input.controllers;
 
-import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ContaResponse;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.mapper.ClienteMapper;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.mapper.ContaMapper;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.ContaRequest;
 import br.com.meubancodigitaljdbc.adapters.input.controllers.request.DepositoRequest;
 import br.com.meubancodigitaljdbc.adapters.input.controllers.request.TransferenciaRequest;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ClienteResponse;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ContaResponse;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.OperacaoResponse;
 import br.com.meubancodigitaljdbc.application.domain.enuns.TipoConta;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ContaNaoValidaException;
@@ -28,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "Conta", description = "Operações bancárias relacionadas a contas")
@@ -38,13 +44,19 @@ public class ContaController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContaController.class);
     private static final String LOG_TEMPO_DECORRIDO = "Tempo Decorrido: {} milissegundos: {}";
-    private final ContaUseCase contaService;
+    private final ContaUseCase contaUseCase;
     private final ClienteUseCase clienteUseCase;
 
+    private final ContaMapper contaMapper;
+
+    private final ClienteMapper clienteMapper;
+
     @Autowired
-    public ContaController(ContaService contaService, ClienteService clienteUserCase) {
-        this.contaService = contaService;
+    public ContaController(ContaService contaUseCase, ClienteService clienteUserCase, ContaMapper contaMapper, ClienteMapper clienteMapper) {
+        this.contaUseCase = contaUseCase;
         this.clienteUseCase = clienteUserCase;
+        this.contaMapper = contaMapper;
+        this.clienteMapper = clienteMapper;
     }
 
     @Operation(summary = "Criar uma nova Conta")
@@ -56,37 +68,41 @@ public class ContaController {
     })
 
     @PostMapping("/criarConta")
-    public ResponseEntity<Conta> criarConta(@Parameter(description = "CPF do Cliente") @RequestParam String cpf, @Parameter(description = "Agência do Cliente") @RequestParam int agencia,
-                                            @Parameter(description = "Tipo de Conta do Cliente") @RequestParam TipoConta tipoConta, HttpServletRequest request)
+    public ResponseEntity<ContaResponse> criarConta(@RequestBody ContaRequest contaRequest,
+                                                    HttpServletRequest httpRequest)
             throws SQLException {
 
         long tempoInicio = System.currentTimeMillis();
-        Cliente cliente = clienteUseCase.buscarClientePorCpf(cpf);
-        Conta conta = contaService.criarConta(cliente, agencia, tipoConta);
+        Cliente cliente = clienteUseCase.buscarClientePorCpf(contaRequest.getCpf());
+        Conta conta = contaUseCase.criarConta(cliente, contaRequest.getAgencia(), contaRequest.getTipoConta());
 
-        LOGGER.info("Conta criada com sucesso para CPF {}", cpf);
+        ContaResponse response = contaMapper.contaToResponse(conta);
+
+        LOGGER.info("Conta criada com sucesso para CPF {}", contaRequest.getCpf());
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
-        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+        LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, httpRequest.getRequestURI());
 
-        return ResponseEntity.ok(conta);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Buscar Conta por CPF")
     @GetMapping("/buscarConta/{cpf}")
-    public ResponseEntity<Cliente> buscarClienteComContas(@Parameter(description = "CPF do Cliente") @PathVariable String cpf, HttpServletRequest request) throws SQLException {
+    public ResponseEntity<ClienteResponse> buscarClienteComContas(@Parameter(description = "CPF do Cliente") @PathVariable String cpf, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
-        Cliente cliente = clienteUseCase.buscarClientePorCpf(cpf);
 
-        List<Conta> contas = contaService.buscarContasPorCliente(cliente);
+        Cliente cliente = clienteUseCase.buscarClientePorCpf(cpf);
+        List<Conta> contas = contaUseCase.buscarContasPorCliente(cliente);
         cliente.setContas(contas);
+
+        ClienteResponse response = clienteMapper.toResponse(cliente);
 
         LOGGER.info("Cliente encontrado: {} ", cpf);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
-        return ResponseEntity.ok(cliente);
+        return ResponseEntity.ok(response);
 
 
     }
@@ -97,20 +113,25 @@ public class ContaController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos")
     })
     @PostMapping("/depositar")
-    public ResponseEntity<String> depositar(
+    public ResponseEntity<OperacaoResponse> depositar(
             @RequestBody DepositoRequest depositoRequest,
             HttpServletRequest request
     ) throws SQLException, OperacoesException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.realizarDeposito(depositoRequest.getNumContaDestino(), depositoRequest.getValor());
+        contaUseCase.realizarDeposito(depositoRequest.getNumContaDestino(), depositoRequest.getValor());
 
         LOGGER.info("Depósito realizado na conta {} no valor de R$ {}", depositoRequest.getNumContaDestino(), depositoRequest.getValor());
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok("Depósito realizado com sucesso.");
+        OperacaoResponse response = new OperacaoResponse(
+                "Deposito realizado com Sucesso",
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -120,13 +141,13 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "PIX realizado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos ou chave PIX incorreta")
     @PostMapping("/efetuarPIX")
-    public ResponseEntity<String> eftuarPix(
+    public ResponseEntity<OperacaoResponse> eftuarPix(
             @RequestBody TransferenciaRequest transferenciaRequest,
             HttpServletRequest request
     ) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.realizarTransferenciaPIX(
+        contaUseCase.realizarTransferenciaPIX(
                 transferenciaRequest.getValor(),
                 transferenciaRequest.getNumContaOrigem(),
                 transferenciaRequest.getChave()
@@ -137,8 +158,12 @@ public class ContaController {
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+        OperacaoResponse response = new OperacaoResponse(
+                "Pix Realizado com Sucesso",
+                LocalDateTime.now()
+        );
 
-        return ResponseEntity.ok("PIX realizado com sucesso");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -149,13 +174,13 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "Transferência realizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos ou conta não encontrada")
     @PostMapping("/transferirPoupanca")
-    public ResponseEntity<String> transferirPoupanca(
+    public ResponseEntity<OperacaoResponse> transferirPoupanca(
             @RequestBody TransferenciaRequest transferenciaRequest,
             HttpServletRequest request
     ) throws SQLException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.realizarTransferenciaPoupanca(
+        contaUseCase.realizarTransferenciaPoupanca(
                 transferenciaRequest.getValor(),
                 transferenciaRequest.getNumContaOrigem(),
                 transferenciaRequest.getNumContaDestino()
@@ -166,8 +191,12 @@ public class ContaController {
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+        OperacaoResponse response = new OperacaoResponse(
+                "Rendimento Aplicado com Sucesso",
+                LocalDateTime.now()
+        );
 
-        return ResponseEntity.ok("Transferência para conta poupança realizada com sucesso!");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -178,7 +207,7 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "Transferência realizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos ou conta não encontrada")
     @PostMapping("/transferirOutrasContas")
-    public ResponseEntity<String> transferirOutrasContas(
+    public ResponseEntity<OperacaoResponse> transferirOutrasContas(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Dados da transferência entre contas",
                     required = true,
@@ -189,7 +218,7 @@ public class ContaController {
     ) throws SQLException, ContaNaoValidaException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.realizarTransferenciaOutrasContas(
+        contaUseCase.realizarTransferenciaOutrasContas(
                 transferenciaRequest.getValor(),
                 transferenciaRequest.getNumContaDestino(),
                 transferenciaRequest.getNumContaOrigem()
@@ -200,8 +229,12 @@ public class ContaController {
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
+        OperacaoResponse response = new OperacaoResponse(
+                "Transferencia realizada com Sucesso",
+                LocalDateTime.now()
+        );
 
-        return ResponseEntity.ok("Transferência realizada com sucesso!");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -209,13 +242,13 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "Manutenção realizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro ao aplicar a taxa")
     @PutMapping("/{idConta}/manutencao")
-    public ResponseEntity<String> aplicarTaxaManutencao(
+    public ResponseEntity<OperacaoResponse> aplicarTaxaManutencao(
             @PathVariable Long idConta,
             HttpServletRequest request
     ) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.aplicarTaxaOuRendimento(idConta, TipoConta.CORRENTE, true);
+        contaUseCase.aplicarTaxaOuRendimento(idConta, TipoConta.CORRENTE, true);
 
         LOGGER.info("Taxa de Manutenção Aplicada");
 
@@ -223,7 +256,12 @@ public class ContaController {
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok("Taxa de Manutenção aplicada com sucesso");
+        OperacaoResponse response = new OperacaoResponse(
+                "Taxa Aplicado com Sucesso",
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
 
@@ -231,17 +269,21 @@ public class ContaController {
     @ApiResponse(responseCode = "200", description = "Rendimento aplicado com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro ao aplicar rendimentos")
     @PutMapping("/{idConta}/rendimentos")
-    public ResponseEntity<String> aplicarRendimentos(@PathVariable Long idConta, HttpServletRequest request) throws Exception {
+    public ResponseEntity<OperacaoResponse> aplicarRendimentos(@PathVariable Long idConta, HttpServletRequest request) throws Exception {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.aplicarTaxaOuRendimento(idConta, TipoConta.POUPANCA, false);
+        contaUseCase.aplicarTaxaOuRendimento(idConta, TipoConta.POUPANCA, false);
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
         LOGGER.info("Taxa de Rendimentos aplicado com Sucesso");
-        return ResponseEntity.ok("Rendimento aplicado com sucesso");
+        OperacaoResponse response = new OperacaoResponse(
+                "Rendimento Aplicado com Sucesso",
+                LocalDateTime.now()
+        );
+        return ResponseEntity.ok(response);
 
     }
 
@@ -250,18 +292,16 @@ public class ContaController {
     public ResponseEntity<ContaResponse> exibirSaldoDetalhado(@RequestParam String cpf, @RequestParam String numConta, HttpServletRequest request) throws SQLException {
         long tempoInicio = System.currentTimeMillis();
 
-        Conta conta = contaService.buscarContaPorClienteEConta(cpf, numConta);
+        Conta conta = contaUseCase.buscarContaPorClienteEConta(cpf, numConta);
 
-        ContaResponse contaResponse = new ContaResponse(conta.getCliente().getNome(),
-                conta.getCliente().getCpf(), conta);
-
+        ContaResponse response = contaMapper.contaToResponse(conta);
         LOGGER.info("Exibir detalhes da conta...");
 
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok(contaResponse);
+        return ResponseEntity.ok(response);
 
     }
 
@@ -275,17 +315,22 @@ public class ContaController {
             @ApiResponse(responseCode = "400", description = "Erro ao tentar deletar a conta")
     })
     @DeleteMapping("/deletar-conta/{contaId}")
-    public ResponseEntity<String> deletarContaId(@PathVariable Long contaId, HttpServletRequest request) throws ClienteInvalidoException {
+    public ResponseEntity<OperacaoResponse> deletarContaId(@PathVariable Long contaId, HttpServletRequest request) throws ClienteInvalidoException {
         long tempoInicio = System.currentTimeMillis();
 
-        contaService.deletarConta(contaId);
+        contaUseCase.deletarConta(contaId);
 
         LOGGER.info("Deletar Conta {}", contaId);
         long tempoFinal = System.currentTimeMillis();
         long tempototal = tempoFinal - tempoInicio;
         LOGGER.info(LOG_TEMPO_DECORRIDO, tempototal, request.getRequestURI());
 
-        return ResponseEntity.ok("Conta deletada com sucesso.");
+        OperacaoResponse response = new OperacaoResponse(
+                "Conta deletada com sucesso.",
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
 

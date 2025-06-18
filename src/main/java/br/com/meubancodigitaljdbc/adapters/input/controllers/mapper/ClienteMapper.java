@@ -5,7 +5,9 @@ import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ClienteRes
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "Spring")
+
+//uses permite reutilizar o ContaMapper para mapear a lista de contas.
+@Mapper(componentModel = "spring", uses = {ContaMapper.class})
 public interface ClienteMapper {
 
     Cliente toRequest(ClienteRequest clienteRequest);

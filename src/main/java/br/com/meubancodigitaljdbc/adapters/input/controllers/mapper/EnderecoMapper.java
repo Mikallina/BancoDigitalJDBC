@@ -5,7 +5,7 @@ import br.com.meubancodigitaljdbc.application.domain.model.Endereco;
 import org.mapstruct.Mapper;
 
 
-@Mapper(componentModel = "Spring")
+@Mapper(componentModel = "spring")
 public interface EnderecoMapper {
 
     EnderecoResponse endereco(Endereco endereco);
