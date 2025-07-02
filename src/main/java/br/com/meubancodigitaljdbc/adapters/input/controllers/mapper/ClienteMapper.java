@@ -1,0 +1,16 @@
+package br.com.meubancodigitaljdbc.adapters.input.controllers.mapper;
+
+import br.com.meubancodigitaljdbc.adapters.input.controllers.request.ClienteRequest;
+import br.com.meubancodigitaljdbc.adapters.input.controllers.response.ClienteResponse;
+import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
+import org.mapstruct.Mapper;
+
+
+//uses permite reutilizar o ContaMapper para mapear a lista de contas.
+@Mapper(componentModel = "spring", uses = {ContaMapper.class})
+public interface ClienteMapper {
+
+    Cliente toRequest(ClienteRequest clienteRequest);
+    ClienteResponse toResponse(Cliente cliente);
+
+}

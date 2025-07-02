@@ -1,0 +1,16 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_conta_poupanca`(
+		IN p_id_conta BIGINT,
+		IN p_taxa_rendimento DOUBLE
+	)
+BEGIN
+      INSERT INTO conta_poupanca (
+			id_conta,
+			taxa_rendimento
+		)
+      VALUES (
+			p_id_conta,
+			p_taxa_rendimento
+		)
+      ON DUPLICATE KEY UPDATE
+			taxa_rendimento = p_taxa_rendimento;
+END

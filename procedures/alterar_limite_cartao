@@ -1,0 +1,26 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `alterar_limite_cartao`(
+	IN p_num_cartao VARCHAR(100),
+	IN p_novo_limite double,
+    OUT p_sucesso BOOLEAN
+)
+BEGIN
+	DECLARE v_id_cartao BIGINT;
+    DECLARE v_status BOOLEAN;
+
+    -- Busca ID e Status
+    SELECT id_cartao, status INTO v_id_cartao, v_status
+    FROM cartao
+    WHERE num_cartao = p_num_cartao;
+
+    IF v_status = FALSE THEN
+		SET p_sucesso = FALSE;
+
+    ELSE
+		UPDATE cartao_credito
+        SET limite_credito = p_novo_limite
+        WHERE id_cartao = v_id_cartao;
+
+        SET p_sucesso = true;
+    END IF;
+
+END

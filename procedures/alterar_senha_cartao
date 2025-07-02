@@ -1,0 +1,24 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `alterar_senha_cartao`(
+    IN p_num_cartao VARCHAR(100),
+    IN p_senha_antiga INT,
+    IN p_senha_nova INT,
+    OUT p_sucesso BOOLEAN
+)
+BEGIN
+    DECLARE v_senha_atual INT;
+
+    -- Obtem a senha atual
+    SELECT senha INTO v_senha_atual
+    FROM cartao
+    WHERE num_cartao = p_num_cartao;
+
+    -- Verifica se a senha antiga bate
+    IF v_senha_atual = p_senha_antiga THEN
+        UPDATE cartao
+        SET senha = p_senha_nova
+        WHERE num_cartao = p_num_cartao;
+        SET p_sucesso = TRUE;
+    ELSE
+        SET p_sucesso = FALSE;
+    END IF;
+END

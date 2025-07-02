@@ -1,0 +1,21 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `buscar_cartoes_conta`(
+    IN p_id_conta BIGINT
+)
+BEGIN
+    SELECT
+        c.*,
+        cc.data_compra,
+        cc.data_vencimento,
+        cc.limite_credito,
+        cc.pagamento,
+        cc.saldo_mes,
+        cc.taxa AS credito_taxa,
+        cc.dia_vencimento,
+        cd.limite_diario,
+        cd.taxa AS debito_taxa,
+        cd.total_pgto_hoje
+    FROM cartao c
+    LEFT JOIN cartao_credito cc ON cc.id_cartao = c.id_cartao
+    LEFT JOIN cartao_debito cd ON cd.id_cartao = c.id_cartao
+    WHERE c.id_conta = p_id_conta;
+END

@@ -1,0 +1,11 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `buscar_id_conta_cat`(
+			p_id_conta BIGINT
+		)
+BEGIN
+	SELECT c.*, cl.categoria
+		FROM conta c
+		JOIN cliente cl
+		ON c.cliente_id = cl.id_cliente
+    WHERE
+		c.id_conta = p_id_conta;
+END

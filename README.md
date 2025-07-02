@@ -21,16 +21,26 @@ A aplicação permite operações bancárias como:
 
 ## ⚙️ Tecnologias Utilizadas
 
-- **Java 17** – Linguagem principal
-- **Spring** – Framework backend
-- **Thymeleaf** – Template engine para renderização no servidor
-- **Bootstrap** – Estilização e responsividade da interface
-- **Maven** – Gerenciador de dependências e build
-- **APIs** – Integração com APIs internas e externas para dados e validações
-- **MySQL** - Integração com Banco de Dados
-- **Swagger** - Documentação
+- **Java 19** – Linguagem principal
+- **Spring Boot** – Framework backend
+- **JDBC Puro** – Acesso direto ao banco de dados
+- **MySQL** – Banco de dados relacional
+- **Swagger/OpenAPI** – Documentação interativa
+- **Maven** – Gerenciamento de dependências e build
+- **Thymeleaf** – (Opcional) para interface baseada em servidor
+- **Bootstrap** – Estilização e responsividade (frontend)
+- **Arquitetura Hexagonal (Ports & Adapters)** – Isolamento de domínio e infraestrutura
+- **APIs externas** – ViaCEP (endereço), Microserviço de E-mail
+- **RabbitMQ** - Sistema fila/evento
+- **Mockito** - Testes Aplicados
 
 ---
+
+
+## ✉️ Integração com Microserviço de E-mail
+
+Ao cadastrar um cliente ou emitir um cartão, o sistema envia um evento (via REST ou fila/evento) para o microserviço de e-mail, que trata o envio assíncrono de mensagens para os usuários.
+
 
 ## 📜 Regras de Negócio
 

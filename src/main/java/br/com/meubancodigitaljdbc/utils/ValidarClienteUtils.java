@@ -1,9 +1,11 @@
 package br.com.meubancodigitaljdbc.utils;
 
-import br.com.meubancodigitaljdbc.model.Endereco;
+import br.com.meubancodigitaljdbc.adapters.output.dao.ClienteDAO;
+import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-
+@Service
 public class ValidarClienteUtils {
 
     public static boolean validarNome(String nome) {
@@ -13,13 +15,6 @@ public class ValidarClienteUtils {
                 nome.matches("[a-zA-Z ]+");
     }
 
-    public static boolean validarEndereco(Endereco endereco) {
-        return endereco != null &&
-                !endereco.getLogradouro().isEmpty() &&
-                endereco.getNumero() != null &&
-                !endereco.getBairro().isEmpty() &&
-                !endereco.getLocalidade().isEmpty();
-    }
 
     public static boolean validarDataNascimento(LocalDate dataNascimento) {
         if (dataNascimento == null || dataNascimento.isAfter(LocalDate.now())) {
@@ -27,6 +22,8 @@ public class ValidarClienteUtils {
         }
         return calcularIdade(dataNascimento) >= 18;
     }
+
+
 
     private static int calcularIdade(LocalDate dataNascimento) {
         LocalDate hoje = LocalDate.now();
@@ -37,6 +34,25 @@ public class ValidarClienteUtils {
             idade--;
         }
         return idade;
+    }
+    ClienteDAO clienteDAO;
+    public boolean validarCpf(String cpf, boolean isAtualizar, Long clienteId) {
+        if (!ValidaCpfUtils.isCPF(cpf)) {
+            return false;
+        }
+        if (isAtualizar) {
+            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+
+            if (clienteExistente != null && !clienteExistente.getIdCliente().equals(clienteId)) {
+                return false;
+            }
+        } else {
+            Cliente clienteExistente = clienteDAO.findByCpf(cpf);
+            if (clienteExistente != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

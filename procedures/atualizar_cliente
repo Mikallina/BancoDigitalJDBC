@@ -1,0 +1,30 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `atualizar_cliente`(
+    IN p_id_cliente BIGINT,
+    IN p_cpf VARCHAR(11),
+    IN p_nome VARCHAR(100),
+    IN p_data_nascimento DATE,
+    IN p_categoria VARCHAR(50),
+    IN p_bairro VARCHAR(100),
+    IN p_cep VARCHAR(10),
+    IN p_complemento VARCHAR(100),
+    IN p_logradouro VARCHAR(100),
+    IN p_numero INT,
+    IN p_localidade VARCHAR(100),
+    IN p_uf VARCHAR(2)
+)
+BEGIN
+    UPDATE cliente
+    SET
+        cpf = p_cpf,
+        nome = p_nome,
+        data_nascimento = p_data_nascimento,
+        categoria = p_categoria,
+        bairro = p_bairro,
+        cep = p_cep,
+        complemento = p_complemento,
+        logradouro = p_logradouro,
+        numero = p_numero,
+        localidade = p_localidade,
+        uf = p_uf
+    WHERE id_cliente = p_id_cliente;
+END
