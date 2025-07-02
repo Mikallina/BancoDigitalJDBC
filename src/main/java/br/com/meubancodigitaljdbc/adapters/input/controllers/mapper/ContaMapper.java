@@ -9,7 +9,6 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface ContaMapper {
 
-    Conta contaToRequest(ContaRequest contaRequest);
 
     ContaResponse contaToResponse(Conta conta);
 }
