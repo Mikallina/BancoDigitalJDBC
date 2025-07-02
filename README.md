@@ -32,6 +32,7 @@ A aplicação permite operações bancárias como:
 - **Arquitetura Hexagonal (Ports & Adapters)** – Isolamento de domínio e infraestrutura
 - **APIs externas** – ViaCEP (endereço), Microserviço de E-mail
 - **RabbitMQ** - Sistema fila/evento
+- **Mockito** - Testes Aplicados
 
 ---
 

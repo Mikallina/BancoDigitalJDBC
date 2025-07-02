@@ -1,12 +1,10 @@
 package service;
-import br.com.meubancodigitaljdbc.adapters.output.producers.ClienteProducer;
 import br.com.meubancodigitaljdbc.application.domain.exceptions.ClienteInvalidoException;
 import br.com.meubancodigitaljdbc.application.domain.model.Cliente;
 import br.com.meubancodigitaljdbc.application.domain.model.Endereco;
 import br.com.meubancodigitaljdbc.application.ports.output.repository.ClienteRepositoryPort;
 import br.com.meubancodigitaljdbc.application.service.CepService;
 import br.com.meubancodigitaljdbc.application.service.ClienteService;
-import br.com.meubancodigitaljdbc.utils.ValidaCpfUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -18,7 +16,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ClienteServiceTest {
+ class ClienteServiceTest {
 
     @Mock
     private ClienteRepositoryPort clienteRepositoryPort;
@@ -26,16 +24,13 @@ public class ClienteServiceTest {
     @Mock
     private CepService cepService;
 
-    @Mock
-    private ClienteProducer clienteProducer;
-
     @InjectMocks
     private ClienteService clienteService;
 
     private Cliente cliente;
 
     @BeforeEach
-    public void setup() {
+     void setup() {
         MockitoAnnotations.openMocks(this);
 
         Endereco endereco = new Endereco();
@@ -52,7 +47,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveSalvarClienteComSucesso() throws Exception {
+     void deveSalvarClienteComSucesso() throws Exception {
         when(cepService.buscarEnderecoPorCep(anyString())).thenReturn(new Endereco());
         when(clienteRepositoryPort.findByCpf(anyString())).thenReturn(null);
         when(clienteRepositoryPort.save(any(Cliente.class))).thenReturn(cliente);
@@ -64,15 +59,13 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveFalharSeCpfInvalido() {
+     void deveFalharSeCpfInvalido() {
         cliente.setCpf("00000000000");
-        assertThrows(ClienteInvalidoException.class, () -> {
-            clienteService.salvarCliente(cliente, false);
-        });
+        assertThrows(ClienteInvalidoException.class, () -> clienteService.salvarCliente(cliente, false));
     }
 
     @Test
-    public void deveBuscarClientePorCpf() {
+     void deveBuscarClientePorCpf() {
         when(clienteRepositoryPort.findByCpf("12345678909")).thenReturn(cliente);
 
         Cliente resultado = clienteService.buscarClientePorCpf("12345678909");
@@ -81,7 +74,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveDeletarCliente() throws ClienteInvalidoException {
+     void deveDeletarCliente() throws ClienteInvalidoException {
         when(clienteRepositoryPort.findById(1L)).thenReturn(Optional.of(cliente));
 
         clienteService.deletarCliente(1L);
@@ -90,16 +83,14 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveLancarExcecaoAoDeletarClienteInexistente() {
+     void deveLancarExcecaoAoDeletarClienteInexistente() {
         when(clienteRepositoryPort.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ClienteInvalidoException.class, () -> {
-            clienteService.deletarCliente(99L);
-        });
+        assertThrows(ClienteInvalidoException.class, () -> clienteService.deletarCliente(99L));
     }
 
     @Test
-    public void deveAtualizarCliente() throws Exception {
+     void deveAtualizarCliente() throws Exception {
         when(clienteRepositoryPort.findById(1L)).thenReturn(Optional.of(cliente));
         doNothing().when(clienteRepositoryPort).update(any(Cliente.class));
 
@@ -110,7 +101,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveListarClientes() {
+     void deveListarClientes() {
         List<Cliente> lista = List.of(cliente);
         when(clienteRepositoryPort.findAll()).thenReturn(lista);
 
@@ -122,7 +113,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveBuscarClientePorId() {
+     void deveBuscarClientePorId() {
         when(clienteRepositoryPort.findById(1L)).thenReturn(Optional.of(cliente));
 
         Optional<Cliente> resultado = clienteService.findById(1L);
@@ -133,7 +124,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveValidarCpfQuandoNovoClienteECpfValidoENaoExiste() {
+     void deveValidarCpfQuandoNovoClienteECpfValidoENaoExiste() {
         // CPF válido e não existe no sistema
         when(clienteRepositoryPort.findByCpf(cliente.getCpf())).thenReturn(null);
 
@@ -143,8 +134,8 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void deveValidarCpfQuandoAtualizarClienteComMesmoCpf() {
-        // Cliente existente com mesmo ID
+     void deveValidarCpfQuandoAtualizarClienteComMesmoCpf() {
+        // Cliente existente com mesmo 'ID'
         Cliente existente = new Cliente();
         existente.setIdCliente(1L);
 
@@ -156,7 +147,7 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void naoDeveValidarCpfQuandoAtualizarComCpfDeOutroCliente() {
+     void naoDeveValidarCpfQuandoAtualizarComCpfDeOutroCliente() {
         // CPF já em uso por outro cliente
         Cliente outro = new Cliente();
         outro.setIdCliente(2L);
